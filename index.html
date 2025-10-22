@@ -1,1630 +1,641 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>价保工具</title>
+<title>价保计算工具</title>
 <style>
-    body{font-family:'Segoe UI',Helvetica,Arial,sans-serif;background-color:#f0f4f8;margin:0;padding:0;color:#333;}
-    .container{max-width:960px;margin:40px auto;background:white;padding:30px;border-radius:16px;box-shadow:0 10px 25px rgba(0,0,0,0.05);position:relative;}
-    h1{color:#007BFF;font-weight:600;text-align:center;margin-bottom:20px;}
-    .channel-switch{position:absolute;top:30px;right:40px;display:flex;gap:10px;}
-    .switch-btn{padding:8px 16px;border-radius:20px;border:2px solid #007BFF;background-color:white;color:#007BFF;cursor:pointer;transition:all .3s;font-weight:bold;}
-    .switch-btn.active{background-color:#007BFF;color:white;}
-    .switch-btn:hover{background-color:#0056b3;color:white;}
-
-.container {
-    padding-top: 80px;  
+:root {
+    --main-blue: #1e88e5;
+    --main-blue-dark: #1565c0;
+    --bg-color: #f5f9ff;
+    --card-bg: rgba(255, 255, 255, 0.95);
+    --shadow: 0 8px 20px rgba(0,0,0,0.08);
+    --required: #e53935;
 }
-
-
-.result div {
-  margin-top: 2px !important;
-  margin-bottom: 2px !important;
+body {font-family: 'Microsoft YaHei', sans-serif;background: var(--bg-color);margin: 0;padding: 0;}
+header {padding: 20px;text-align: center;font-size: 22px;font-weight: 600;color: var(--main-blue-dark);}
+.tabs {display: flex;justify-content: center;gap: 10px;margin-bottom: 15px;flex-wrap:wrap;}
+.tab {padding: 8px 20px;border-radius: 30px;cursor: pointer;font-size: 14px;color: #666;transition: all 0.3s ease;}
+.tab:hover { background: rgba(30,136,229,0.08); }
+.tab.active {background: linear-gradient(135deg, var(--main-blue), var(--main-blue-dark));color: white;box-shadow: var(--shadow);}
+.container {max-width: 1000px;margin: auto;background: var(--card-bg);backdrop-filter: blur(6px);padding: 20px 30px;border-radius: 15px;box-shadow: var(--shadow);}
+label {display: block;font-size: 13px;margin-top: 12px;color: var(--main-blue-dark);font-weight: 500;}
+.required::after {content: "*";color: var(--required);margin-left: 3px;}
+input, select {width: 100%;padding: 8px 10px;margin-top: 4px;border-radius: 8px;border: 1px solid #ddd;font-size: 14px;transition: 0.3s;outline: none;background: white;box-sizing: border-box;}
+input:focus, select:focus {border-color: var(--main-blue);box-shadow: 0 0 0 3px rgba(30, 136, 229, 0.1);}
+.inline-input {display: flex;align-items: center;gap: 4px;margin-top: 4px;}
+.inline-input input {width: 60px;}
+button {width: 100%;margin-top: 15px;padding: 10px;border: none;border-radius: 10px;background: linear-gradient(135deg, var(--main-blue), var(--main-blue-dark));color: white;font-size: 15px;font-weight: 600;cursor: pointer;transition: 0.3s;}
+button:hover {transform: translateY(-1px);box-shadow: 0 8px 20px rgba(21,101,192,0.3);}
+.result {margin-top: 12px;padding: 10px;border-radius: 8px;font-size: 14px;}
+.success {background: rgba(30,136,229,0.08);color: var(--main-blue-dark);}
+.error   {background: rgba(244,67,54,0.08);color: #c62828;}
+.date-group {
+    display: block;
+    padding: 8px 10px;
+    margin-top: 4px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    background: white;
+    cursor: pointer;
 }
-.result img {
-  margin: 0 !important;
-  display: block;
+.date-group:hover {
+    border-color: var(--main-blue);
+    box-shadow: 0 0 0 3px rgba(30, 136, 229, 0.1);
 }
-
-    .select-box{margin-top:20px;background:white;border:2px solid #cce5ff;border-radius:8px;padding:12px;}
-    .label{font-weight:bold;color:#0056b3;margin-bottom:6px;font-size:14px;}
-    select,input[type="date"]{width:100%;padding:8px;border:none;font-size:15px;color:#333;outline:none;background:transparent;cursor:pointer;}
-    button{display:block;width:100%;margin-top:30px;padding:14px;background:linear-gradient(90deg,#007BFF,#0056b3);color:white;font-size:18px;border:none;border-radius:8px;cursor:pointer;transition:opacity .3s;}
-    button:hover{opacity:0.9;}
-    .result{margin-top:30px;padding:20px;background-color:#eaf4ff;border-left:5px solid #007BFF;border-radius:8px;font-size:15px;white-space:pre-line;}
+.date-group input[type="date"] {
+    border: none;
+    width: 100%;
+    background: transparent;
+    cursor: pointer;
+}
 </style>
 </head>
 <body>
+<header>价保计算工具</header>
+<div class="tabs">
+    <div class="tab active" onclick="switchPlatform(this, '抖音')">抖音</div>
+    <div class="tab" onclick="switchPlatform(this, '天猫')">天猫</div>
+    <div class="tab" onclick="switchPlatform(this, '拼多多')">拼多多</div>
+    <div class="tab" onclick="switchPlatform(this, '微信')">微信</div>
+    <div class="tab" onclick="switchPlatform(this, '小红书')">小红书</div>
+    <div class="tab" onclick="switchPlatform(this, '商城')">商城</div>
+</div>
 <div class="container">
-    <h1>价保工具</h1>
-    <div class="channel-switch">
-        <div class="switch-btn active" id="btnOnline" onclick="setChannel('线上')">线上</div>
-        <div class="switch-btn" id="btnOffline" onclick="setChannel('线下')">线下</div>
- <div class="switch-btn" id="btnL2" onclick="setChannel('客诉L2外呼')">客诉L2外呼</div>
-<div class="switch-btn" id="btnSpecial" onclick="setChannel('特殊场景')">特殊场景话术</div>
+    <h3 id="platformTitle" style="margin-top:0;color:var(--main-blue-dark)">当前平台：天猫</h3>
+    <label class="required">支付时间</label>
+    <div class="date-group" onclick="document.getElementById('orderTime').showPicker()">
+        <input type="date" id="orderTime">
     </div>
+    <label class="required">申请价保时间</label>
+    <div class="date-group" onclick="document.getElementById('applyTime').showPicker()">
+        <input type="date" id="applyTime">
+    </div>
+    <button onclick="checkEligibility()">下一步</button>
 
-    <div class="select-box" id="onlineChannelBox" style="display:none;">
-        <div class="label">购买渠道（线上）</div>
-        <select id="onlineChannel">
-            <option value="">请选择</option>
-            <option value="官方渠道">官方渠道（大疆商城、京东自营、京东官方旗舰店，天猫/抖音/小红书/拼多多/微信小店-大疆创新官方旗舰店）</option>
-            <option value="线上授权">线上授权（如：天猫-朋来客数码专营店；京东-朋来客数码专营店/大疆智选专卖店；得物-带品牌专供标志；拼多多-DJI大疆非凡世纪专卖店）</option>
-            <option value="线上非授权">线上非授权（除了官方渠道、线上授权店铺，其他线上店铺均为非授权店铺）</option>
-            <option value="官网商城-翻新机">官网商城-翻新机</option>
+    <div id="moreFields" style="display:none;">
+        <label class="required">产品</label>
+        <select id="productSelect" onchange="updateVersionOptions()"><option value="">--选择产品--</option></select>
+        <label class="required">版本</label>
+        <select id="versionSelect" onchange="autoFillProductPrice()"><option value="">--选择版本--</option></select>
+        <label class="required">原订单商品单价 (¥)</label>
+        <input type="number" id="originalPrice" placeholder="请输入金额">
+        <label class="required">申请价保时商品单价 (¥)</label>
+        <input type="number" id="currentPrice" placeholder="请输入金额">
+        <label class="required">已退差金额 (¥)</label>
+        <input type="number" id="alreadyRefunded" placeholder="请输入金额">
+        <label>原订单是否有国补 (%)</label>
+        <select id="originalSubsidySelect" onchange="setSubsidyValue('original')">
+            <option value="no">无</option>
+            <option value="yes" selected>有</option>
         </select>
-    </div>
-
-    <div class="select-box" id="productBox">
-        <div class="label">选择产品</div>
-        <select id="product"></select>
-    </div>
-
-    <div class="select-box" id="payDateBox">
-        <div class="label">客户支付时间</div>
-        <input type="date" id="payDate">
-    </div>
-
-    <div class="select-box" id="applyDateBox">
-        <div class="label">客户申请价保时间</div>
-        <input type="date" id="applyDate">
-    </div>
-
-
-
-<!-- 翻新机：产品选择，复用已有 productBox -->
-<!-- 翻新机：版本选择 -->
-<div class="select-box" id="versionBox" style="display:none;">
-  <div class="label">选择版本（翻新机）</div>
-  <select id="version">
-    <option value="">请选择</option>
-  </select>
-</div>
-
-<!-- 翻新机：订单支付时间（下拉区间） -->
-<div class="select-box" id="refurbPayRangeBox" style="display:none;">
-  <div class="label">订单支付时间（翻新机-区间）</div>
-  <select id="refurbPayRange">
-    <option value="">请选择</option>
-    <option value="afterOct9">10月9日0点之后</option>
-    <option value="Sept17_to_Oct8">9月17日0点-10月8日 24点</option>
-    <option value="beforeSept16">9月16日及之前的订单</option>
-  </select>
-</div>
-
-<!-- 翻新机：客户申请价保时间（下拉区间） -->
-<div class="select-box" id="refurbApplyRangeBox" style="display:none;">
-  <div class="label">客户申请价保时间（翻新机-区间）</div>
-  <select id="refurbApplyRange">
-    <option value="">请选择</option>
-    <!-- 选项将随“支付时间区间”和“产品”联动填充 -->
-  </select>
-</div>
-
-
-    <div class="select-box" id="offlineChannelBox" style="display:none;">
-        <div class="label">购买渠道（线下）</div>
-        <select id="offlineChannel">
-            <option value="">请选择</option>
-           <option value="线下授权门店-非KA">线下授权门店--非KA渠道（如：深圳中洲湾授权体验店；西安龙首印象城授权体验店)</option>
-            <option value="线下授权门店-KA">线下授权门店--KA渠道（如：北京大兴二店山姆会员店6519；顺电-深圳万象家电)</option>
-            <option value="线下非授权门店">线下非授权门店（除了线下授权门店，其他线下门店均为非授权门店）</option>
+        <div class="inline-input"><input type="number" id="originalSubsidy" value="15"><span>%</span></div>
+        <label>申请价保时是否有国补 (%)</label>
+        <select id="currentSubsidySelect" onchange="setSubsidyValue('current')">
+            <option value="no">无</option>
+            <option value="yes" selected>有</option>
         </select>
+        <div class="inline-input"><input type="number" id="currentSubsidy" value="15"><span>%</span></div>
+        <button onclick="calculate()">计算退差金额并生成话术</button>
     </div>
-
-    <div class="select-box" id="offlineDateRangeBox" style="display:none;">
-        <div class="label">购买时间范围（线下）</div>
-        <select id="offlineDateRange">
-            <option value="">请选择</option>
-            <option value="10月2日--10月8日">10月2日--10月8日</option>
-            <option value="9月9日--10月1日">9月9日--10月1日</option>
-            <option value="9月9日之前">9月9日之前</option>
-        </select>
-    </div>
-
-<div class="select-box" id="specialBox" style="display:none;">
-
-    <div class="label">特殊场景列表</div>
-
-    <select id="specialScenario">
-
-        <option value="">请选择</option>
-
-        <option value="snRefurbished">客户询问 5wtcn 开头的序列号SN是不是翻新机？(或：客户收到的产品有外观瑕疵，质疑大疆售卖翻新机，存在质量问题)</option>
-        <option value="malicious abuse">若客户恶意语言中伤或辱骂，无法正常沟通，参考如下话术礼貌挂机</option>
-        <option value="Official Account">部分公众号/媒体发文或报道大疆双十一降价的事情。客户 (非媒体身份) 进线咨询。如何应对？</option>
-        <option value="Order meets price guarantee">客户订单符合价保，但因产品无货导致价保超期，需要申请仅退款退全额差价，此类仅退款订单处理时效较长</option>
-        <option value="Request a return and refund">客户申请退货退款，产品退回后因为工厂积压签收后无法及时检测回传，由于退款时效问题会优先拒单</option>
-        <!-- 后续可继续加其他场景 -->
-
-    </select>
-</div>
-
-<div class="select-box" id="l2Box" style="display:none;">
-    <div class="label">客诉L2外呼 场景选择</div>
-    
-    <!-- 提示文本 -->
-    <div style="background:#fffbea;border:1px solid #fcd34d;border-radius:6px;padding:8px;margin-bottom:10px;font-size:14px;line-height:1.6;">
-        以下内容，适用于客诉L2外呼场景。<br>
-        若是支援客诉L2外呼的同学，除了参考下边的内容，还可以查阅云文档：售前客诉活动争议场景外呼流程
-        <a href="https://docs.djicorp.com/weboffice/l/scNzhBNnOmgVr" target="_blank" style="color:#2563EB;text-decoration:underline;">
-           https://docs.djicorp.com/weboffice/l/scNzhBNnOmgVr
-        </a>
-    </div>
-    
-    <!-- 场景选择 -->
-    <select id="l2Scenario">
-        <option value="">请选择</option>
-        <option value="电话未接通">场景一：电话未接通</option>
-        <option value="电话已接通">场景二：电话已接通</option>
-        <option value="用户接受周边，但要求更多补偿">场景三：用户接受周边，但要求更多补偿</option>
-        <option value="用户接受周边礼品">场景四：用户接受周边礼品</option>
-        <option value="特殊场景--霸线客户">场景五：特殊场景--霸线客户</option>
-    </select>
-</div>
-
-
-
-
-    <button onclick="showResult()">查询方案</button>
-    <div id="output" class="result" style="display:none;"></div>
+    <div id="result" class="result" style="display:none;"></div>
 </div>
 
 <script>
-// ----- 数据部分 -----
-let currentChannel = "线上";
+const DEFAULT_SUBSIDY = 15;
+let currentPlatform = '天猫';
 
 
-// 翻新机产品选项
-const refurbProducts = [
-  { value: "OA4R", label: "OA4 翻新机" },
-  { value: "OA5PR", label: "OA5 Pro 翻新机" },
-  { value: "OP3R", label: "OP3 翻新机" }
-];
-
-// 翻新机版本选项映射
-const refurbVersions = {
-  "OA4R": [
-    { value: "OA4STD_R", label: "Osmo Action 4 标准套装 翻新机" },
-    { value: "OA4ALL_R", label: "Osmo Action 4 全能套装 翻新机" }
-  ],
-  "OA5PR": [
-    { value: "OA5P_STD_R", label: "Osmo Action 5 Pro 标准套装 翻新机" },
-    { value: "OA5P_CH_R", label: "Osmo Action 5 Pro 畅拍套装 翻新机" }
-  ],
-  "OP3R": [
-    { value: "OP3_STD_R", label: "Osmo Pocket 3 翻新机" },
-    { value: "OP3_ALL_R", label: "Osmo Pocket 3 全能套装 翻新机" }
-  ]
+const productPriceRules = {
+    "Mini 4 Pro": {
+        "单机-普通遥控器": { All: 4070 },
+        "单机-带屏遥控器": { All: 5090 },
+        "套装-带屏遥控器": { All: 5590 },
+        "长续航-带屏遥控器": { All: 5910 }
+    },
+    "Avata 2": {
+        "DJI Avata 2 畅飞套装 (单电池版)": { 拼多多: 5089.80, 微信: 5089.80, 小红书: 5089.80 },
+        "DJI Avata 2 畅飞套装 (三电池版)": { 拼多多: 5939.80, 微信: 5939.80, 小红书: 5939.80 },
+        "DJI Avata 2 -单机版": { 拼多多: 2539.80, 微信: 2539.80, 小红书: 2539.80 }
+    },
+    "Mini 3": {
+        "普通版": { All: 2088 },
+        "带屏版": { All: 2788 },
+        "带屏套": { All: 3488 }
+    },
+    "Mini 4K": {
+        "单机": { All: 1499 },
+        "双电": { All: 1848 },
+        "畅飞套": { All: 2099 }
+    },
+    "Neo": {
+        "DJI Neo 单机": { 拼多多: 1104.15, 微信: 1104.15, 小红书: 1104.15 },
+        "DJI Neo 畅飞套装": { 拼多多: 1954.15, 微信: 1954.15, 小红书: 1954.15 },
+        "DJI Neo 体感套装": { 拼多多: 2974.15, 微信: 2974.15, 小红书: 2974.15 }
+    },
+    "OA4": {
+        "OA4 标准套装": { All: 1248.65 },
+        "OA4 全能套装": { All: 1948.20 }
+    },
+    "OA5": {
+        "Action 5 Pro 标准套装": { All: 1848 },
+        "Action 5 Pro 畅拍套装": { All: 2248 }
+    },
+    "Osmo 360": {
+        "Osmo 360 标准": { 天猫: 2585, "京东自营": 2585, "京东POP": 2585, 抖音: 2585, 商城: 2585, 拼多多: 2197.25, 微信: 2197.25, 小红书: 2197.25 },
+        "Osmo 360 畅拍套装": { 天猫: 3408, "京东自营": 3408, "京东POP": 3408, 抖音: 3408, 商城: 3408, 拼多多: 2896.80, 微信: 2896.80, 小红书: 2896.80 }
+    },
+    "OP3": {
+        "Osmo Pocket 3 单机": { All: 2799 },
+        "Osmo Pocket 3 全能套装": { All: 3599 }
+    },
+    "OM 7P": {
+        "OM 7P": { All: 699 }
+    },
+    "OM 7": {
+        "OM 7": { All: 399 }
+    },
+    "OM SE": {
+        "OM SE": { All: 299 }
+    },
+    "RS3 Mini": {
+        "DJI RS3 Mini": { 拼多多: 1104.15, 微信: 1104.15, 小红书: 1104.15 }
+    },
+    "RS4 Mini": {
+        "DJI RS 4 Mini": { 拼多多: 1699.15, 微信: 1699.15, 小红书: 1699.15 },
+        "DJI RS 4 Mini Combo": { 拼多多: 2124.15, 微信: 2124.15, 小红书: 2124.15 }
+    },
+    "RS4": {
+        "DJI RS 4": { 拼多多: 2549.15, 微信: 2549.15, 小红书: 2549.15 },
+        "DJI RS 4 Combo": { 拼多多: 3314.15, 微信: 3314.15, 小红书: 3314.15 }
+    },
+    "Mic Mini": {
+        "两发一收，带充电盒": { 天猫: 589, "京东自营": 589, "京东POP": 589, 抖音: 589, 商城: 589, 拼多多: 500.65, 微信: 500.65, 小红书: 500.65 },
+        "一发一收": { 天猫: 319, "京东自营": 319, "京东POP": 319, 抖音: 319, 商城: 319, 拼多多: 271.15, 微信: 271.15, 小红书: 271.15 },
+        "发射器": { 天猫: 179, "京东自营": 179, "京东POP": 179, 抖音: 179, 商城: 179, 拼多多: 152.15, 微信: 152.15, 小红书: 152.15 }
+    },
+    "Mic": {
+        "DJI Mic（两发一收，含充电盒）": { 天猫: 1169, "京东自营": 1169, "京东POP": 1169, 抖音: 1169, 商城: 1169, 拼多多: 993.65, 微信: 993.65, 小红书: 993.65 },
+        "DJI Mic（一发一收）": { 天猫: 699, "京东自营": 699, "京东POP": 699, 抖音: 699, 商城: 699, 拼多多: 594.15, 微信: 594.15, 小红书: 594.15 }
+    },
+    "Mic 2": {
+        "DJI Mic（两发一收，含充电盒）": { 拼多多: 1444.15, 微信: 1444.15, 小红书: 1444.15 },
+        "DJI Mic（一发一收）": { 拼多多: 934.15, 微信: 934.15, 小红书: 934.15 },
+        "DJI Mic（两发一收，含充电盒 mini版）": { 拼多多: 424.15, 微信: 424.15, 小红书: 424.15 }
+    },
+    "Power": {
+        "Power 1000": { All: 2499 },
+        "Power 1000 V2": { All: 2399 },
+        "Power 2000": { All: 4699 }
+    }
 };
 
-// 翻新机补偿金额（双11活动期可退差）
-const refurbCompAfterOct9 = {
-  "OA4STD_R": 804, "OA4ALL_R": 810,
-  "OA5P_STD_R": 640, "OA5P_CH_R": 896,
-  "OP3_STD_R": 594, "OP3_ALL_R": 764
-};
 
-// 翻新机灰度补偿金额（9/17-10/8期间）
-const refurbCompSept17ToOct8 = {
-  "OP3_STD_R": { type: "cash", amount: 356 },
-  "OP3_ALL_R": { type: "cash", amount: 458 },
-  "OA5P_STD_R": { type: "cash", amount: 384 },
-  "OA5P_CH_R": { type: "cash", amount: 538 },
-  // OA4 翻新机为优惠券
-  "OA4STD_R": { type: "coupon", amount: 400, max: true },
-  "OA4ALL_R": { type: "coupon", amount: 400, max: true }
-};
+const scriptRules = {
+  "抖音": {
+    no_no: `原订单为非国补链接：引导客户申请仅退款>退运费    <br>    
+<br>
+亲亲，咱们店铺是提供 7 天价保服务的，自订单支付时间起 7 天内（7*24小时），因同一商品出现商家官方降价，是支持价保的。本次退差金额为 {{amount}} 元，您可以按照如下方式提交退差申请哈
+<br><br>
+申请方式：<br>
+①如已收到货：订单先确认收货，然后申请仅退款-退运费-输入差价金额即可<br>
+②如未收到货：待收到货后检查无误，当天确认收货，然后申请仅退款-退运费-输入差价金额即可<br>
+<br><br>
+温馨提示：因国家及政府发放补贴、平台红包（含消费券）、限量发放的购物券或单品补贴等非由本店铺发放的优惠政策导致的价格差异不在价保范围内
+`,
+    no_yes: `原订单为非国补链接：引导客户申请仅退款>退运费        
+<br><br>
+亲亲，咱们店铺是提供 7 天价保服务的，自订单支付时间起 7 天内（7*24小时），因同一商品出现商家官方降价，是支持价保的。本次退差金额为 {{amount}} 元，您可以按照如下方式提交退差申请哈
+<br><br>
+申请方式：<br>
+①如已收到货：订单先确认收货，然后申请仅退款-退运费-输入差价金额即可<br>
+②如未收到货：待收到货后检查无误，当天确认收货，然后申请仅退款-退运费-输入差价金额即可<br>
+<br><br>
+温馨提示：因国家及政府发放补贴、平台红包（含消费券）、限量发放的购物券或单品补贴等非由本店铺发放的优惠政策导致的价格差异不在价保范围内
+`,
+    yes_yes: `原订单为国补链接：提供小额打款退差<br><br>
 
-// 翻新机参考话术（简化整合）
-const refurbTalk = {
-  afterOct9: `请您放心哈，双11活动期 2025年10月9日 00:00 至 11月14日 23:59:59 支付的订单，可价保至 11月21日 23:59:59。
-您可以进入「我的订单>申请售后>仅退款>退差价」申请价保。差价将会在2-7个工作日原路退还到您的支付账户，请您留意查收哦~`,
-  refuse7days: `店铺是提供 7 天价保服务的，查看到目前您的订单支付时间距离申请价保时间已经超过 7 天（7×24小时），已经超过了店铺的价保周期，实在是抱歉呢`,
-  grayCompCash: amount => `看到您的购买时间确实不久，考虑到您的购物体验，我为您特殊申请了补偿方案，可以为您提供 ${amount} 元现金补偿，您可以灵活购买需要的配件或自由支配，您看可以吗？`,
-  grayCompCoupon: amount => `看到您的购买时间确实不久，考虑到您的购物体验，我为您特殊申请了补偿方案，可以为您提供 ${amount} 元商城优惠券，您可以灵活购买需要的配件或产品，您看可以吗？`,
-  reBuy: `同为消费者非常理解您的心情，如您产品签收时间次日起计算在 30 天内，并符合店铺退货要求，建议您这边申请下退货退款，再重新以活动价购买，您看这样可以吗？`,
-  beforeSept16: `9月17日0点-10月8日 24点支付的订单：
-① 优先婉拒解释价保政策，安抚客户
-② 不接受，使用灰度处理方案
-③ 如仍不接受，如签收30天内可退货重拍
+亲，咱们店铺是提供 7 天价保服务的，自订单支付时间起 7 天内（7*24小时），因同一商品出现商家官方降价，是支持价保的。本次价保金额为 {{amount}} 元，预计将在  7 天内 由专人为您操作小额打款退差，还请您耐心等待呢，感谢您的支持~
+<br><br>
+温馨提示：因国家及政府发放补贴、平台红包（含消费券）、限量发放的购物券或单品补贴等非由本店铺发放的优惠政策导致的价格差异不在价保范围内`,
+    yes_no: `原订单为国补链接：提供小额打款退差
+<br><br>
+亲，咱们店铺是提供 7 天价保服务的，自订单支付时间起 7 天内（7*24小时），因同一商品出现商家官方降价，是支持价保的。本次价保金额为 {{amount}} 元，预计将在  7 天内 由专人为您操作小额打款退差，还请您耐心等待呢，感谢您的支持~
+<br><br>
+温馨提示：因国家及政府发放补贴、国家及政府补贴波动导致的价差、平台红包（含消费券）、限量发放的购物券或单品补贴等非由本店铺发放的优惠政策导致的价格差异不在价保范围内`,
+    refundZero: `亲，咱们店铺是提供 7 天价保服务的，自订单支付时间起 7 天内（7*24小时），因同一商品出现商家官方降价，是支持价保的。查看到您之前购买商品的价格很实惠，本次不涉及价保哦~
+<br><br>
+温馨提示：因国家及政府发放补贴、国家及政府补贴波动导致的价差、平台红包（含消费券）、限量发放的购物券或单品补贴等非由本店铺发放的优惠政策导致的价格差异不在价保范围内`
+  },
+  "商城": {
+    no_no: `引导客户申请仅退款>退运费    
+<br><br>
+亲亲，咱们店铺是提供 7 天价保服务的，自订单支付时间起 7 天内（7*24小时），因同一商品出现商家官方降价，是支持价保的。本次退差金额为 {{amount}} 元，
+您可以进入「我的订单>申请售后>仅退款>退差价」申请价保。差价将会在2-7个工作日原路退还到您的支付账户，请您留意查收哦~
+<br><br>
+温馨提示：因国家及政府发放补贴导致的价差不在价保范围内
+<br><br>
 
-9月17日0点之前支付的订单：
-【处理原则】
-1. 价保专线需直接处理闭环价保问题。
-2. 如遇到明确表示恶意霸线场景（霸线≥15分钟），按如下思路和沟通节奏处理，然后走礼貌挂机流程（需报备TL审批，TL审批后登记至：https://docs.djicorp.com/weboffice/l/sd17qDgMfB0nA）。
-3. 升级客诉规范：
-① 无风险场景尽量拦截，按照话术及方案澄清价保原则，告知有方案/无方案，不升级客诉。
-② 如遇如下场景，可升级客诉处理（注：搜集客户姓名、电话、及客户信息升级客诉（客诉标签选择：电商-活动争议））。
+注：有赞商城非国补订单，使用主动退款退差价`,
+    no_yes: `引导客户申请仅退款>退运费    
+<br><br>
+亲亲，咱们店铺是提供 7 天价保服务的，自订单支付时间起 7 天内（7*24小时），因同一商品出现商家官方降价，是支持价保的。本次退差金额为 {{amount}} 元，
+您可以进入「我的订单>申请售后>仅退款>退差价」申请价保。差价将会在2-7个工作日原路退还到您的支付账户，请您留意查收哦~
+<br><br>
+温馨提示：因国家及政府发放补贴导致的价差不在价保范围内
 
-【参考话术】
-第一次沟通--5分钟预警话术：XX先生/女士，您的心情我完全理解……由于您的订单已超过价保政策时间太久，遗憾无法为您提供价保服务或退差价，辛苦理解。
+<br><br>
+注：有赞商城非国补订单，使用主动退款退差价`,
+    yes_yes: `仅有赞商城及购机通涉及国补，如涉及价保退差，需联系服务商退差`,
+    yes_no: `仅有赞商城及购机通涉及国补，如涉及价保退差，需联系服务商退差`,
+    refundZero: `亲，咱们店铺是提供 7 天价保服务的，自订单支付时间起 7 天内（7*24小时），因同一商品出现商家官方降价，是支持价保的。查看到您之前购买商品的价格很实惠，本次不涉及价保哦~
+<br><br>
+温馨提示：因国家及政府发放补贴、国家及政府补贴波动导致的价差不在价保范围内`,
+  },
+  "拼多多": {
+    no_no: `店铺目前不涉及国补：引导客户申请仅退款>退运费        
+<br><br>
+亲亲，咱们店铺是提供 7 天价保服务的，自订单支付时间起 7 天内（7*24小时），因同一商品出现商家官方降价，是支持价保的。本次退差金额为 {{amount}} 元，您可以按照如下方式提交退差申请哈
+<br><br>
+申请方式：<br>
+①如已收到货：订单先确认收货，然后申请仅退款-退运费-输入差价金额即可<br>
+②如未收到货：待收到货后检查无误，当天确认收货，然后申请仅退款-退运费-输入差价金额即可<br><br>
 
-第二次主导沟通--10分钟再次强调价保话术：非常理解您的心情……订单已经超出双11活动价保时效很长时间了，抱歉确实无法为您提供价保服务或退差价。
+温馨提示：因国家及政府发放补贴、平台红包（含消费券）、限量发放的购物券或单品补贴等非由本店铺发放的优惠政策导致的价格差异不在价保范围内
+`,
+    no_yes: `店铺目前不涉及国补：引导客户申请仅退款>退运费        
+<br><br>
+亲亲，咱们店铺是提供 7 天价保服务的，自订单支付时间起 7 天内（7*24小时），因同一商品出现商家官方降价，是支持价保的。本次退差金额为 {{amount}} 元，您可以按照如下方式提交退差申请哈
+<br><br>
+申请方式：<br>
+①如已收到货：订单先确认收货，然后申请仅退款-退运费-输入差价金额即可<br>
+②如未收到货：待收到货后检查无误，当天确认收货，然后申请仅退款-退运费-输入差价金额即可<br><br>
 
-第三次礼貌挂机--15分钟礼貌挂机：我们非常希望能协助您解决问题，但目前您的订单因超过价保时效很久，无法再进行价保……祝您生活愉快，再见。`
-};
+温馨提示：因国家及政府发放补贴、平台红包（含消费券）、限量发放的购物券或单品补贴等非由本店铺发放的优惠政策导致的价格差异不在价保范围内
+`,
+    yes_yes: `店铺目前不涉及国补：引导客户申请仅退款>退运费        
+<br><br>
+亲亲，咱们店铺是提供 7 天价保服务的，自订单支付时间起 7 天内（7*24小时），因同一商品出现商家官方降价，是支持价保的。本次退差金额为 {{amount}} 元，您可以按照如下方式提交退差申请哈
+<br><br>
+申请方式：<br>
+①如已收到货：订单先确认收货，然后申请仅退款-退运费-输入差价金额即可<br>
+②如未收到货：待收到货后检查无误，当天确认收货，然后申请仅退款-退运费-输入差价金额即可<br><br>
 
-// 翻新机申请价保时间区间联动（随“订单支付时间”和“产品”变化）
-function updateRefurbApplyRanges(product, payRange) {
-  const applySel = document.getElementById('refurbApplyRange');
-  applySel.innerHTML = '<option value="">请选择</option>';
+温馨提示：因国家及政府发放补贴、平台红包（含消费券）、限量发放的购物券或单品补贴等非由本店铺发放的优惠政策导致的价格差异不在价保范围内
+`,
+    yes_no: `店铺目前不涉及国补：引导客户申请仅退款>退运费        
+<br><br>
+亲亲，咱们店铺是提供 7 天价保服务的，自订单支付时间起 7 天内（7*24小时），因同一商品出现商家官方降价，是支持价保的。本次退差金额为 {{amount}} 元，您可以按照如下方式提交退差申请哈
+<br><br>
+申请方式：<br>
+①如已收到货：订单先确认收货，然后申请仅退款-退运费-输入差价金额即可<br>
+②如未收到货：待收到货后检查无误，当天确认收货，然后申请仅退款-退运费-输入差价金额即可<br><br>
 
-  if (payRange === 'afterOct9') {
-    const opt = document.createElement('option');
-    opt.value = 'apply_afterOct9';
-    opt.textContent = '2025年10月9日 00:00 至 11月21日 23:59:59';
-    applySel.appendChild(opt);
-    return;
+温馨提示：因国家及政府发放补贴、平台红包（含消费券）、限量发放的购物券或单品补贴等非由本店铺发放的优惠政策导致的价格差异不在价保范围内
+`,
+    refundZero: `亲，咱们店铺是提供 7 天价保服务的，自订单支付时间起 7 天内（7*24小时），因同一商品出现商家官方降价，是支持价保的。查看到您之前购买商品的价格很实惠，本次不涉及价保哦~
+
+温馨提示：因国家及政府发放的补贴、国家及政府补贴波动导致的价差、平台红包（含消费券）、限量发放的购物券或单品补贴等非由本店铺发放的优惠政策导致的价格差异不在价保范围内`,
+  },
+
+
+
+  "微信": {        no_no: `店铺目前不涉及国补：引导客户申请仅退款>退运费        
+<br><br>
+亲亲，咱们店铺是提供 7 天价保服务的，自订单支付时间起 7 天内（7*24小时），因同一商品出现商家官方降价，是支持价保的。本次退差金额为 {{amount}} 元，您可以按照如下方式提交退差申请哈
+<br><br>
+申请方式：<br>
+①如已收到货：订单先确认收货，然后申请仅退款-退运费-输入差价金额即可<br>
+②如未收到货：待收到货后检查无误，当天确认收货，然后申请仅退款-退运费-输入差价金额即可<br><br>
+
+温馨提示：因国家及政府发放补贴、平台红包（含消费券）、限量发放的购物券或单品补贴等非由本店铺发放的优惠政策导致的价格差异不在价保范围内
+`,
+    no_yes: `店铺目前不涉及国补：引导客户申请仅退款>退运费        
+<br><br>
+亲亲，咱们店铺是提供 7 天价保服务的，自订单支付时间起 7 天内（7*24小时），因同一商品出现商家官方降价，是支持价保的。本次退差金额为 {{amount}} 元，您可以按照如下方式提交退差申请哈
+<br><br>
+申请方式：<br>
+①如已收到货：订单先确认收货，然后申请仅退款-退运费-输入差价金额即可<br>
+②如未收到货：待收到货后检查无误，当天确认收货，然后申请仅退款-退运费-输入差价金额即可<br><br>
+
+温馨提示：因国家及政府发放补贴、平台红包（含消费券）、限量发放的购物券或单品补贴等非由本店铺发放的优惠政策导致的价格差异不在价保范围内
+`,
+    yes_yes: `店铺目前不涉及国补：引导客户申请仅退款>退运费        
+<br><br>
+亲亲，咱们店铺是提供 7 天价保服务的，自订单支付时间起 7 天内（7*24小时），因同一商品出现商家官方降价，是支持价保的。本次退差金额为 {{amount}} 元，您可以按照如下方式提交退差申请哈
+<br><br>
+申请方式：<br>
+①如已收到货：订单先确认收货，然后申请仅退款-退运费-输入差价金额即可<br>
+②如未收到货：待收到货后检查无误，当天确认收货，然后申请仅退款-退运费-输入差价金额即可<br><br>
+
+温馨提示：因国家及政府发放补贴、平台红包（含消费券）、限量发放的购物券或单品补贴等非由本店铺发放的优惠政策导致的价格差异不在价保范围内
+`,
+    yes_no: `店铺目前不涉及国补：引导客户申请仅退款>退运费        
+<br><br>
+亲亲，咱们店铺是提供 7 天价保服务的，自订单支付时间起 7 天内（7*24小时），因同一商品出现商家官方降价，是支持价保的。本次退差金额为 {{amount}} 元，您可以按照如下方式提交退差申请哈
+<br><br>
+申请方式：<br>
+①如已收到货：订单先确认收货，然后申请仅退款-退运费-输入差价金额即可<br>
+②如未收到货：待收到货后检查无误，当天确认收货，然后申请仅退款-退运费-输入差价金额即可<br><br>
+
+温馨提示：因国家及政府发放补贴、平台红包（含消费券）、限量发放的购物券或单品补贴等非由本店铺发放的优惠政策导致的价格差异不在价保范围内
+`,
+    refundZero: `亲，咱们店铺是提供 7 天价保服务的，自订单支付时间起 7 天内（7*24小时），因同一商品出现商家官方降价，是支持价保的。查看到您之前购买商品的价格很实惠，本次不涉及价保哦~
+
+温馨提示：因国家及政府发放的补贴、国家及政府补贴波动导致的价差、平台红包（含消费券）、限量发放的购物券或单品补贴等非由本店铺发放的优惠政策导致的价格差异不在价保范围内`,
+  },
+
+  "小红书": {        no_no: `店铺目前不涉及国补：引导客户申请仅退款>退运费        
+<br><br>
+亲亲，咱们店铺是提供 7 天价保服务的，自订单支付时间起 7 天内（7*24小时），因同一商品出现商家官方降价，是支持价保的。本次退差金额为 {{amount}} 元，您可以按照如下方式提交退差申请哈
+<br><br>
+申请方式：<br>
+①如已收到货：订单先确认收货，然后申请仅退款-退运费-输入差价金额即可<br>
+②如未收到货：待收到货后检查无误，当天确认收货，然后申请仅退款-退运费-输入差价金额即可<br><br>
+
+温馨提示：因国家及政府发放补贴、平台红包（含消费券）、限量发放的购物券或单品补贴等非由本店铺发放的优惠政策导致的价格差异不在价保范围内
+`,
+    no_yes: `店铺目前不涉及国补：引导客户申请仅退款>退运费        
+<br><br>
+亲亲，咱们店铺是提供 7 天价保服务的，自订单支付时间起 7 天内（7*24小时），因同一商品出现商家官方降价，是支持价保的。本次退差金额为 {{amount}} 元，您可以按照如下方式提交退差申请哈
+<br><br>
+申请方式：<br>
+①如已收到货：订单先确认收货，然后申请仅退款-退运费-输入差价金额即可<br>
+②如未收到货：待收到货后检查无误，当天确认收货，然后申请仅退款-退运费-输入差价金额即可<br><br>
+
+温馨提示：因国家及政府发放补贴、平台红包（含消费券）、限量发放的购物券或单品补贴等非由本店铺发放的优惠政策导致的价格差异不在价保范围内
+`,
+    yes_yes: `店铺目前不涉及国补：引导客户申请仅退款>退运费        
+<br><br>
+亲亲，咱们店铺是提供 7 天价保服务的，自订单支付时间起 7 天内（7*24小时），因同一商品出现商家官方降价，是支持价保的。本次退差金额为 {{amount}} 元，您可以按照如下方式提交退差申请哈
+<br><br>
+申请方式：<br>
+①如已收到货：订单先确认收货，然后申请仅退款-退运费-输入差价金额即可<br>
+②如未收到货：待收到货后检查无误，当天确认收货，然后申请仅退款-退运费-输入差价金额即可<br><br>
+
+温馨提示：因国家及政府发放补贴、平台红包（含消费券）、限量发放的购物券或单品补贴等非由本店铺发放的优惠政策导致的价格差异不在价保范围内
+`,
+    yes_no: `店铺目前不涉及国补：引导客户申请仅退款>退运费        
+<br><br>
+亲亲，咱们店铺是提供 7 天价保服务的，自订单支付时间起 7 天内（7*24小时），因同一商品出现商家官方降价，是支持价保的。本次退差金额为 {{amount}} 元，您可以按照如下方式提交退差申请哈
+<br><br>
+申请方式：<br>
+①如已收到货：订单先确认收货，然后申请仅退款-退运费-输入差价金额即可<br>
+②如未收到货：待收到货后检查无误，当天确认收货，然后申请仅退款-退运费-输入差价金额即可<br><br>
+
+温馨提示：因国家及政府发放补贴、平台红包（含消费券）、限量发放的购物券或单品补贴等非由本店铺发放的优惠政策导致的价格差异不在价保范围内
+`,
+    refundZero: `亲，咱们店铺是提供 7 天价保服务的，自订单支付时间起 7 天内（7*24小时），因同一商品出现商家官方降价，是支持价保的。查看到您之前购买商品的价格很实惠，本次不涉及价保哦~
+
+温馨提示：因国家及政府发放的补贴、国家及政府补贴波动导致的价差、平台红包（含消费券）、限量发放的购物券或单品补贴等非由本店铺发放的优惠政策导致的价格差异不在价保范围内`,
+  },
+
+  "天猫": {
+    no_no: `引导客户申请一键价保<br>
+【话术】亲亲，咱们店铺商品是有参与平台价保服务的，查看您的订单目前符合价保，您可以进入：手机淘宝搜索【价保】进入价保中心，一键申请价保哦
+<br><br>
+温馨提示：因国家及政府发放的补贴、平台红包（含消费券）、运费、天猫购物券、天猫积分、淘金币抵扣、限量发放的购物券或单品补贴，平台官方补贴（含百亿补贴）等非由本店铺发放的优惠政策导致的价格差异不在价保范围内
+`,
+    no_yes: `1. 引导客户申请一键价保<br><br>
+【话术】亲亲，咱们店铺商品是有参与平台价保服务的，查看您的订单目前符合价保，您可以进入：手机淘宝搜索【价保】进入价保中心，一键申请价保哦
+<br><br>
+温馨提示：国家补贴、平台满减活动、优惠券等不包含在价保范围内
+<br><br>
+2. 如涉及【国补+百补】优惠，导致订单不支持一键价保，可人工计算价保金额，并使用小额打款退差
+<br><br>
+亲，咱们店铺是提供 7 天价保服务的，自订单支付时间起 7 天内（7*24小时），因同一商品出现商家官方降价，是支持价保的。本次价保金额为 {{amount}} 元，预计将在 7 天内 由专人为您操作小额打款退差，还请您耐心等待呢，感谢您的支持~
+<br><br>
+温馨提示：因国家及政府发放补贴、国家及政府补贴波动导致的价差、平台红包（含消费券）、运费、天猫购物券、天猫积分、淘金币抵扣、限量发放的购物券或单品补贴，平台官方补贴（含百亿补贴）等非由本店铺发放的优惠政策导致的价格差异不在价保范围内
+<br><br>
+注：一定要优先引导一键价保，否则容易出现重复退差的问题
+`,
+    yes_yes: `1. 引导客户申请一键价保<br>
+【话术】亲亲，咱们店铺商品是有参与平台价保服务的，查看您的订单目前符合价保，您可以进入：手机淘宝搜索【价保】进入价保中心，一键申请价保哦
+<br><br>
+温馨提示：国家补贴、平台满减活动、优惠券等不包含在价保范围内
+<br><br>
+2. 如涉及【国补+百补】优惠，导致订单不支持一键价保，可人工计算价保金额，并使用小额打款退差
+<br><br>
+亲，咱们店铺是提供 7 天价保服务的，自订单支付时间起 7 天内（7*24小时），因同一商品出现商家官方降价，是支持价保的。本次价保金额为 {{amount}} 元，预计将在 7 天内 由专人为您操作小额打款退差，还请您耐心等待呢，感谢您的支持~
+<br><br>
+温馨提示：因国家及政府发放补贴、国家及政府补贴波动导致的价差、平台红包（含消费券）、运费、天猫购物券、天猫积分、淘金币抵扣、限量发放的购物券或单品补贴，平台官方补贴（含百亿补贴）等非由本店铺发放的优惠政策导致的价格差异不在价保范围内
+<br><br>
+注：一定要优先引导一键价保，否则容易出现重复退差的问题
+`,
+    yes_no: `1. 引导客户申请一键价保<br>
+【话术】亲亲，咱们店铺商品是有参与平台价保服务的，查看您的订单目前符合价保，您可以进入：手机淘宝搜索【价保】进入价保中心，一键申请价保哦
+<br><br>
+温馨提示：国家补贴、平台满减活动、优惠券等不包含在价保范围内
+<br><br>
+2. 如涉及【国补+百补】优惠，导致订单不支持一键价保，可人工计算价保金额，并使用小额打款退差
+<br><br>
+亲，咱们店铺是提供 7 天价保服务的，自订单支付时间起 7 天内（7*24小时），因同一商品出现商家官方降价，是支持价保的。本次价保金额为 {{amount}} 元，预计将在 7 天内 由专人为您操作小额打款退差，还请您耐心等待呢，感谢您的支持~
+<br><br>
+温馨提示：因国家及政府发放补贴、国家及政府补贴波动导致的价差、平台红包（含消费券）、运费、天猫购物券、天猫积分、淘金币抵扣、限量发放的购物券或单品补贴，平台官方补贴（含百亿补贴）等非由本店铺发放的优惠政策导致的价格差异不在价保范围内
+<br><br>
+注：一定要优先引导一键价保，否则容易出现重复退差的问题
+`,
+    refundZero: `亲，咱们店铺是提供 7 天价保服务的，自订单支付时间起 7 天内（7*24小时），因同一商品出现商家官方降价，是支持价保的。查看到您之前购买商品的价格很实惠，本次不涉及价保哦~
+<br><br>
+温馨提示：因国家及政府发放补贴、国家及政府补贴波动导致的价差、平台红包（含消费券）、运费、天猫购物券、天猫积分、淘金币抵扣、限量发放的购物券或单品补贴，平台官方补贴（含百亿补贴）等非由本店铺发放的优惠政策导致的价格差异不在价保范围内`,
   }
+};
 
-  if (payRange === 'Sept17_to_Oct8') {
-    if (product === 'OA4R') {
-      const opt = document.createElement('option');
-      opt.value = 'apply_OA4_30days';
-      opt.textContent = '订单签收次日起30天内（可提供DJI商城优惠券）';
-      applySel.appendChild(opt);
+
+window.onload = function() {
+    const productSelect = document.getElementById("productSelect");
+    for (let product in productPriceRules) {
+        let opt = document.createElement("option");
+        opt.value = product;
+        opt.textContent = product;
+        productSelect.appendChild(opt);
+    }
+};
+
+function updateVersionOptions() {
+    const product = document.getElementById("productSelect").value;
+    const versionSelect = document.getElementById("versionSelect");
+    versionSelect.innerHTML = '<option value="">--选择版本--</option>';
+    if (!product) return;
+    for (let version in productPriceRules[product]) {
+        let opt = document.createElement("option");
+        opt.value = version;
+        opt.textContent = version;
+        versionSelect.appendChild(opt);
+    }
+}
+
+function autoFillProductPrice() {
+    const product = document.getElementById("productSelect").value;
+    const version = document.getElementById("versionSelect").value;
+    if (!product || !version) return;
+    const priceMap = productPriceRules[product][version];
+    let price = priceMap[currentPlatform] ?? priceMap["All"];
+    if (price != null) {
+        document.getElementById('currentPrice').value = price;
     } else {
-      const opt = document.createElement('option');
-      opt.value = 'apply_OA5OP3_window';
-      opt.textContent = '2025年10月17日 12:00 至 11月14日 24:00';
-      applySel.appendChild(opt);
-    }
-    return;
-  }
-
-  if (payRange === 'beforeSept16') {
-    const opt = document.createElement('option');
-    opt.value = 'apply_over30';
-    opt.textContent = '超30天无价保';
-    applySel.appendChild(opt);
-    return;
-  }
-}
-
-
-
-
-const onlineProducts = [
-    {value:"OP3标准版",label:"Osmo Pocket 3 - 标准版、VLOG"},
-    {value:"OP3全能套装",label:"Osmo Pocket 3 - 全能套装"},
-    {value:"OQ标准版",label:"Osmo 360 - 标准版"},
-    {value:"畅拍391",label:"Osmo 360 - 畅拍"},
-    {value:"OA5标准版",label:"Osmo Action 5 Pro - 标准版"},
-    {value:"畅拍1050",label:"Osmo Action 5 Pro - 畅拍"}
-];
-const offlineProducts = [
-    {value:"价保机型",label:"Osmo Pocket 3 / Osmo Action 5 Pro / Osmo 360"},
-    {value:"其他产品",label:"其他产品"}
-];
-
-// 线下购买渠道选项，根据产品不同而不同
-const offlineChannelOptions = {
-    "价保机型": [
-        {value: "线下授权门店-非KA", label: "线下授权门店--非KA渠道（如：深圳中洲湾授权体验店；西安龙首印象城授权体验店)"},
-        {value: "线下授权门店-KA", label: "线下授权门店--KA渠道（如：北京大兴二店山姆会员店6519；顺电-深圳万象家电)"},
-        {value: "线下非授权门店", label: "线下非授权门店（除了线下授权门店，其他线下门店均为非授权门店）"}
-    ],
-    "其他产品": [
-        {value: "线下授权门店", label: "线下授权门店（如：深圳中洲湾授权体验店；西安龙首印象城授权体验店；北京大兴二店山姆会员店6519；顺电-深圳万象家电)"},
-        {value: "线下非授权门店", label: "线下非授权门店（除了线下授权门店，其他线下门店均为非授权门店）"}
-    ]
-};
-
-
-const onlineScheme = {
-    "OP3标准版": {
-         "7天内": "1、JD自营：（京东平台-大疆创新京东自营旗舰店）走平台自助，按照签收后7天\n2、JD POP：（京东平台-大疆创新官方旗舰店）：走平台自助，按照提交订单时间\n3、其余2C官渠（天猫/抖音/小红书/拼多多/微信小店-大疆创新官方旗舰店）按照支付订单时间，其中天猫渠道可自助价保",
-        "8-30天": "<div style=\"color:#E67E22;font-weight:700;\">【处理思路】先告知客户超过7天没有价保，若客户不接受，告知特殊申请价保方案，把两个方案同时提供让客户二选一，以上方案客户均不接受可以引导退货处理，但需要满足退货条件</div>\n<div style=\"color:#6C5CE7;font-weight:700;\">【退货条件】</div>\n<div style=\"color:#6C5CE7;\">手持摄影设备（签收次日起 30 天），如符合以下条件之一，可以申请退货：</div>\n<div style=\"color:#6C5CE7;\">√ 产品外包装、附件、赠品、说明书完整，并且没有任何人为损坏，不影响二次销售；</div>\n<div style=\"color:#6C5CE7;\">√ 发现产品存在非人为损坏的性能故障。</div>\n<div style=\"color:#6C5CE7;\">注意：手持设备激活可退</div>\n    回复话术参考链接中（处理流程-非电商）：https://docs.djicorp.com/weboffice/l/somxmLGcr5irO    \n\n方案二选一 <span style='color:red;font-weight:bold;'>（注意：京东自营只能选择现金方案）</span>：\n1、400元现金\n2、mic mini 1拖2（价值699元） / mic 3发射器（价值699元）【二选一】",
-"30天以上": `
-<span style='color:red;font-weight:bold;'>无灰度<br>【处理原则】</span><br>
-<span style='color:red;font-weight:bold;'>1. 价保专线需直接处理闭环价保问题。</span><br>
-<span style='color:red;font-weight:bold;'>2. 如遇到明确表示恶意霸线场景（霸线≥15分钟），按如下思路和沟通节奏处理。然后走礼貌挂机流程（需报备TL审批，TL审批后登记至</span>
-<a href="https://docs.djicorp.com/weboffice/l/sd17qDgMfB0nA" target="_blank">https://docs.djicorp.com/weboffice/l/sd17qDgMfB0nA</a>）。<br>
-<span style='color:red;font-weight:bold;'>3. 升级客诉规范：</span><br>
-① 无风险场景尽量拦截，按照话术及方案澄清清楚价保原则，告知有方案/无方案，不升级客诉<br><br>
-② 如遇如下场景，可升级客诉处理（注：搜集客户姓名、电话、及客户信息升级客诉（客诉标签选择：电商-活动争议））。<br>
-客诉团队选择：除TP和维音客诉升级到LM消费客诉团队，其余团队接到客诉问题升级到自己所在团队的客诉。<br>
-</div><!-- 图片占位：门店类型一 --><div style=\"margin:1px 0;\"> <img src=\"https://terra-1-g.djicdn.com/eb222cbc4f4345e3a134199bab1f0894/133e3d7877f049769d11309b0ed71664.png\" alt=\"门店类型一图片\" style=\"max-width:100%;height:auto;\"</div>
-<span style='color:red;font-weight:bold;'>【参考话术】</span><br>
-<span style='color:red;font-weight:bold;'>第一次沟通--5分钟预警话术：</span>
-XX先生/女士，您的心情我完全理解，确实超出活动价保周期的情况会让您感到难受，
-但也帮您核查到由于您的订单已超过价保政策时间太久，所以也遗憾无法为您提供价保服务或退差价，
-辛苦您也可以谅解。<br><br>
-
-<span style='color:red;font-weight:bold;'>第二次主导沟通--10分钟再次强调价保话术：</span>
-非常理解您的心情，这边看到您的订单时间是XX。您提前购买了产品，
-也能记录更多独一无二的精彩时刻。但这个订单已经超出双11活动价保时效很长时间了，
-抱歉确实无法为您提供价保服务或退差价。<br><br>
-
-<span style='color:red;font-weight:bold;'>第三次礼貌挂机--15分钟礼貌挂机：</span>
-我们非常希望能协助您解决问题，但目前您的订单因超过价保时效很久，
-无法再进行价保，衷心希望您可以理解。如果您后续还有其他问题，欢迎您随时联系我们。
-先不打扰您了，祝您生活愉快，再见。
-`
-    },
-    "OP3全能套装": {
-        "7天内": "1、JD自营：（京东平台-大疆创新京东自营旗舰店）走平台自助，按照签收后7天\n2、JD POP：（京东平台-大疆创新官方旗舰店）：走平台自助，按照提交订单时间\n3、其余2C官渠（天猫/抖音/小红书/拼多多/微信小店-大疆创新官方旗舰店）按照支付订单时间，其中天猫渠道可自助价保",
-"8-30天": "<div style=\"color:#E67E22;font-weight:700;\">【处理思路】先告知客户超过7天没有价保，若客户不接受，告知特殊申请价保方案，把两个方案同时提供让客户二选一，以上方案客户均不接受可以引导退货处理，但需要满足退货条件</div>\n<div style=\"color:#6C5CE7;font-weight:700;\">【退货条件】</div>\n<div style=\"color:#6C5CE7;\">手持摄影设备（签收次日起 30 天），如符合以下条件之一，可以申请退货：</div>\n<div style=\"color:#6C5CE7;\">√ 产品外包装、附件、赠品、说明书完整，并且没有任何人为损坏，不影响二次销售；</div>\n<div style=\"color:#6C5CE7;\">√ 发现产品存在非人为损坏的性能故障。</div>\n<div style=\"color:#6C5CE7;\">注意：手持设备激活可退</div>\n    回复话术参考链接中（处理流程-非电商）：https://docs.djicorp.com/weboffice/l/somxmLGcr5irO    \n\n方案二选一 <span style='color:red;font-weight:bold;'>（注意：京东自营只能选择现金方案）</span>：\n1、500元现金\n2、mic mini 1拖2（价值699元） / mic 3发射器（价值699元）【二选一】",
-"30天以上": `
-<span style='color:red;font-weight:bold;'>无灰度<br>【处理原则】</span><br>
-<span style='color:red;font-weight:bold;'>1. 价保专线需直接处理闭环价保问题。</span><br>
-<span style='color:red;font-weight:bold;'>2. 如遇到明确表示恶意霸线场景（霸线≥15分钟），按如下思路和沟通节奏处理。然后走礼貌挂机流程（需报备TL审批，TL审批后登记至</span>
-<a href="https://docs.djicorp.com/weboffice/l/sd17qDgMfB0nA" target="_blank">https://docs.djicorp.com/weboffice/l/sd17qDgMfB0nA</a>）。<br>
-<span style='color:red;font-weight:bold;'>3. 升级客诉规范：</span><br>
-① 无风险场景尽量拦截，按照话术及方案澄清清楚价保原则，告知有方案/无方案，不升级客诉<br><br>
-② 如遇如下场景，可升级客诉处理（注：搜集客户姓名、电话、及客户信息升级客诉（客诉标签选择：电商-活动争议））。<br>
-客诉团队选择：除TP和维音客诉升级到LM消费客诉团队，其余团队接到客诉问题升级到自己所在团队的客诉。<br>
-</div><!-- 图片占位：门店类型一 --><div style=\"margin:1px 0;\"> <img src=\"https://terra-1-g.djicdn.com/eb222cbc4f4345e3a134199bab1f0894/133e3d7877f049769d11309b0ed71664.png\" alt=\"门店类型一图片\" style=\"max-width:100%;height:auto;\"</div>
-<span style='color:red;font-weight:bold;'>【参考话术】</span><br>
-<span style='color:red;font-weight:bold;'>第一次沟通--5分钟预警话术：</span>
-XX先生/女士，您的心情我完全理解，确实超出活动价保周期的情况会让您感到难受，
-但也帮您核查到由于您的订单已超过价保政策时间太久，所以也遗憾无法为您提供价保服务或退差价，
-辛苦您也可以谅解。<br><br>
-
-<span style='color:red;font-weight:bold;'>第二次主导沟通--10分钟再次强调价保话术：</span>
-非常理解您的心情，这边看到您的订单时间是XX。您提前购买了产品，
-也能记录更多独一无二的精彩时刻。但这个订单已经超出双11活动价保时效很长时间了，
-抱歉确实无法为您提供价保服务或退差价。<br><br>
-
-<span style='color:red;font-weight:bold;'>第三次礼貌挂机--15分钟礼貌挂机：</span>
-我们非常希望能协助您解决问题，但目前您的订单因超过价保时效很久，
-无法再进行价保，衷心希望您可以理解。如果您后续还有其他问题，欢迎您随时联系我们。
-先不打扰您了，祝您生活愉快，再见。
-`
-    },
-    "OQ标准版": {
-        "7天内": "1、JD自营：（京东平台-大疆创新京东自营旗舰店）走平台自助，按照签收后7天\n2、JD POP：（京东平台-大疆创新官方旗舰店）：走平台自助，按照提交订单时间\n3、其余2C官渠（天猫/抖音/小红书/拼多多/微信小店-大疆创新官方旗舰店）按照支付订单时间，其中天猫渠道可自助价保",
-        "8-30天": "<div style=\"color:#E67E22;font-weight:700;\">【处理思路】先告知客户超过7天没有价保，若客户不接受告知特殊申请价保方案，提供现金方案，以上方案客户均不接受可以引导退货处理，但需要满足退货条件</div>\n<div style=\"color:#6C5CE7;font-weight:700;\">【退货条件】</div>\n<div style=\"color:#6C5CE7;\">手持摄影设备（签收次日起 30 天），如符合以下条件之一，可以申请退货：</div>\n<div style=\"color:#6C5CE7;\">√ 产品外包装、附件、赠品、说明书完整，并且没有任何人为损坏，不影响二次销售；</div>\n<div style=\"color:#6C5CE7;\">√ 发现产品存在非人为损坏的性能故障。</div>\n<div style=\"color:#6C5CE7;\">注意：手持设备激活可退</div>\n回复话术参考链接中（处理流程-非电商）：https://docs.djicorp.com/weboffice/l/somxmLGcr5irO    \n\n天猫/京东旗舰店/京东自营//抖音/商城：250元现金\n拼多多/微信小店/小红书：480元现金\n\n<div style=\"margin-top:4px;color:#6C5CE7;font-weight:700;\">【OQ补贴金额不一致的解释口径】特别理解您会有这样的疑问，价保差价主要有两方面原因，一方面是套装不同因此价保的金额有所不同，另一方面是不同平台及渠道的活动形式及补贴金额不一样，我们结合了补贴、平台活动进行了核算，最终相同套装实际支付的价格是一样的，所以这点您可以放心呢~</div>",
-"30天以上": `
-<span style='color:red;font-weight:bold;'>无灰度<br>【处理原则】</span><br>
-<span style='color:red;font-weight:bold;'>1. 价保专线需直接处理闭环价保问题。</span><br>
-<span style='color:red;font-weight:bold;'>2. 如遇到明确表示恶意霸线场景（霸线≥15分钟），按如下思路和沟通节奏处理。然后走礼貌挂机流程（需报备TL审批，TL审批后登记至</span>
-<a href="https://docs.djicorp.com/weboffice/l/sd17qDgMfB0nA" target="_blank">https://docs.djicorp.com/weboffice/l/sd17qDgMfB0nA</a>）。<br>
-<span style='color:red;font-weight:bold;'>3. 升级客诉规范：</span><br>
-① 无风险场景尽量拦截，按照话术及方案澄清清楚价保原则，告知有方案/无方案，不升级客诉<br><br>
-② 如遇如下场景，可升级客诉处理（注：搜集客户姓名、电话、及客户信息升级客诉（客诉标签选择：电商-活动争议））。<br>
-客诉团队选择：除TP和维音客诉升级到LM消费客诉团队，其余团队接到客诉问题升级到自己所在团队的客诉。<br>
-</div><!-- 图片占位：门店类型一 --><div style=\"margin:1px 0;\"> <img src=\"https://terra-1-g.djicdn.com/eb222cbc4f4345e3a134199bab1f0894/133e3d7877f049769d11309b0ed71664.png\" alt=\"门店类型一图片\" style=\"max-width:100%;height:auto;\"</div>
-<span style='color:red;font-weight:bold;'>【参考话术】</span><br>
-<span style='color:red;font-weight:bold;'>第一次沟通--5分钟预警话术：</span>
-XX先生/女士，您的心情我完全理解，确实超出活动价保周期的情况会让您感到难受，
-但也帮您核查到由于您的订单已超过价保政策时间太久，所以也遗憾无法为您提供价保服务或退差价，
-辛苦您也可以谅解。<br><br>
-
-<span style='color:red;font-weight:bold;'>第二次主导沟通--10分钟再次强调价保话术：</span>
-非常理解您的心情，这边看到您的订单时间是XX。您提前购买了产品，
-也能记录更多独一无二的精彩时刻。但这个订单已经超出双11活动价保时效很长时间了，
-抱歉确实无法为您提供价保服务或退差价。<br><br>
-
-<span style='color:red;font-weight:bold;'>第三次礼貌挂机--15分钟礼貌挂机：</span>
-我们非常希望能协助您解决问题，但目前您的订单因超过价保时效很久，
-无法再进行价保，衷心希望您可以理解。如果您后续还有其他问题，欢迎您随时联系我们。
-先不打扰您了，祝您生活愉快，再见。
-`
-    },
-    "畅拍391": {
-        "7天内": "1、JD自营：（京东平台-大疆创新京东自营旗舰店）走平台自助，按照签收后7天\n2、JD POP：（京东平台-大疆创新官方旗舰店）：走平台自助，按照提交订单时间\n3、其余2C官渠（天猫/抖音/小红书/拼多多/微信小店-大疆创新官方旗舰店）按照支付订单时间，其中天猫渠道可自助价保",
-        "8-30天": "<div style=\"color:#E67E22;font-weight:700;\">【处理思路】先告知客户超过7天没有价保，若客户不接受告知特殊申请价保方案，提供现金方案，以上方案客户均不接受可以引导退货处理，但需要满足退货条件</div>\n<div style=\"color:#6C5CE7;font-weight:700;\">【退货条件】</div>\n<div style=\"color:#6C5CE7;\">手持摄影设备（签收次日起 30 天），如符合以下条件之一，可以申请退货：</div>\n<div style=\"color:#6C5CE7;\">√ 产品外包装、附件、赠品、说明书完整，并且没有任何人为损坏，不影响二次销售；</div>\n<div style=\"color:#6C5CE7;\">√ 发现产品存在非人为损坏的性能故障。</div>\n<div style=\"color:#6C5CE7;\">注意：手持设备激活可退</div>\n回复话术参考链接中（处理流程-非电商）：https://docs.djicorp.com/weboffice/l/somxmLGcr5irO    \n\n天猫/京东旗舰店/京东自营//抖音/商城：250元现金\n拼多多/微信小店/小红书：550元现金\n\n<div style=\"margin-top:4px;color:#6C5CE7;font-weight:700;\">【OQ补贴金额不一致的解释口径】特别理解您会有这样的疑问，价保差价主要有两方面原因，一方面是套装不同因此价保的金额有所不同，另一方面是不同平台及渠道的活动形式及补贴金额不一样，我们结合了补贴、平台活动进行了核算，最终相同套装实际支付的价格是一样的，所以这点您可以放心呢~</div>",
-"30天以上": `
-<span style='color:red;font-weight:bold;'>无灰度<br>【处理原则】</span><br>
-<span style='color:red;font-weight:bold;'>1. 价保专线需直接处理闭环价保问题。</span><br>
-<span style='color:red;font-weight:bold;'>2. 如遇到明确表示恶意霸线场景（霸线≥15分钟），按如下思路和沟通节奏处理。然后走礼貌挂机流程（需报备TL审批，TL审批后登记至</span>
-<a href="https://docs.djicorp.com/weboffice/l/sd17qDgMfB0nA" target="_blank">https://docs.djicorp.com/weboffice/l/sd17qDgMfB0nA</a>）。<br>
-<span style='color:red;font-weight:bold;'>3. 升级客诉规范：</span><br>
-① 无风险场景尽量拦截，按照话术及方案澄清清楚价保原则，告知有方案/无方案，不升级客诉<br><br>
-② 如遇如下场景，可升级客诉处理（注：搜集客户姓名、电话、及客户信息升级客诉（客诉标签选择：电商-活动争议））。<br>
-客诉团队选择：除TP和维音客诉升级到LM消费客诉团队，其余团队接到客诉问题升级到自己所在团队的客诉。<br>
-</div><!-- 图片占位：门店类型一 --><div style=\"margin:1px 0;\"> <img src=\"https://terra-1-g.djicdn.com/eb222cbc4f4345e3a134199bab1f0894/133e3d7877f049769d11309b0ed71664.png\" alt=\"门店类型一图片\" style=\"max-width:100%;height:auto;\"</div>
-<span style='color:red;font-weight:bold;'>【参考话术】</span><br>
-<span style='color:red;font-weight:bold;'>第一次沟通--5分钟预警话术：</span>
-XX先生/女士，您的心情我完全理解，确实超出活动价保周期的情况会让您感到难受，
-但也帮您核查到由于您的订单已超过价保政策时间太久，所以也遗憾无法为您提供价保服务或退差价，
-辛苦您也可以谅解。<br><br>
-
-<span style='color:red;font-weight:bold;'>第二次主导沟通--10分钟再次强调价保话术：</span>
-非常理解您的心情，这边看到您的订单时间是XX。您提前购买了产品，
-也能记录更多独一无二的精彩时刻。但这个订单已经超出双11活动价保时效很长时间了，
-抱歉确实无法为您提供价保服务或退差价。<br><br>
-
-<span style='color:red;font-weight:bold;'>第三次礼貌挂机--15分钟礼貌挂机：</span>
-我们非常希望能协助您解决问题，但目前您的订单因超过价保时效很久，
-无法再进行价保，衷心希望您可以理解。如果您后续还有其他问题，欢迎您随时联系我们。
-先不打扰您了，祝您生活愉快，再见。
-`
-    },
-    "OA5标准版": {
-        "7天内": "1、JD自营：（京东平台-大疆创新京东自营旗舰店）走平台自助，按照签收后7天\n2、JD POP：（京东平台-大疆创新官方旗舰店）：走平台自助，按照提交订单时间\n3、其余2C官渠（天猫/抖音/小红书/拼多多/微信小店-大疆创新官方旗舰店）按照支付订单时间，其中天猫渠道可自助价保",
-        "8-30天": "<div style=\"color:#E67E22;font-weight:700;\">【处理思路】先告知客户超过7天没有价保，若客户不接受，告知特殊申请价保方案，把两个方案同时提供让客户二选一，以上方案客户均不接受可以引导退货处理，但需要满足退货条件</div>\n<div style=\"color:#6C5CE7;font-weight:700;\">【退货条件】</div>\n<div style=\"color:#6C5CE7;\">手持摄影设备（签收次日起 30 天），如符合以下条件之一，可以申请退货：</div>\n<div style=\"color:#6C5CE7;\">√ 产品外包装、附件、赠品、说明书完整，并且没有任何人为损坏，不影响二次销售；</div>\n<div style=\"color:#6C5CE7;\">√ 发现产品存在非人为损坏的性能故障。</div>\n<div style=\"color:#6C5CE7;\">注意：手持设备激活可退</div>\n回复话术参考链接中（处理流程-非电商）：https://docs.djicorp.com/weboffice/l/somxmLGcr5irO    \n\n方案二选一：<span style='color:red;font-weight:bold;'>（注意：京东自营只能选择现金方案）</span>\n方案一：450元现金\n方案二：mic mini 1拖2（价值699）/mic 3发射器（价值699）【二选一】",
-"30天以上": `
-<span style='color:red;font-weight:bold;'>无灰度<br>【处理原则】</span><br>
-<span style='color:red;font-weight:bold;'>1. 价保专线需直接处理闭环价保问题。</span><br>
-<span style='color:red;font-weight:bold;'>2. 如遇到明确表示恶意霸线场景（霸线≥15分钟），按如下思路和沟通节奏处理。然后走礼貌挂机流程（需报备TL审批，TL审批后登记至</span>
-<a href="https://docs.djicorp.com/weboffice/l/sd17qDgMfB0nA" target="_blank">https://docs.djicorp.com/weboffice/l/sd17qDgMfB0nA</a>）。<br>
-<span style='color:red;font-weight:bold;'>3. 升级客诉规范：</span><br>
-① 无风险场景尽量拦截，按照话术及方案澄清清楚价保原则，告知有方案/无方案，不升级客诉<br><br>
-② 如遇如下场景，可升级客诉处理（注：搜集客户姓名、电话、及客户信息升级客诉（客诉标签选择：电商-活动争议））。<br>
-客诉团队选择：除TP和维音客诉升级到LM消费客诉团队，其余团队接到客诉问题升级到自己所在团队的客诉。<br>
-</div><!-- 图片占位：门店类型一 --><div style=\"margin:1px 0;\"> <img src=\"https://terra-1-g.djicdn.com/eb222cbc4f4345e3a134199bab1f0894/133e3d7877f049769d11309b0ed71664.png\" alt=\"门店类型一图片\" style=\"max-width:100%;height:auto;\"</div>
-<span style='color:red;font-weight:bold;'>【参考话术】</span><br>
-<span style='color:red;font-weight:bold;'>第一次沟通--5分钟预警话术：</span>
-XX先生/女士，您的心情我完全理解，确实超出活动价保周期的情况会让您感到难受，
-但也帮您核查到由于您的订单已超过价保政策时间太久，所以也遗憾无法为您提供价保服务或退差价，
-辛苦您也可以谅解。<br><br>
-
-<span style='color:red;font-weight:bold;'>第二次主导沟通--10分钟再次强调价保话术：</span>
-非常理解您的心情，这边看到您的订单时间是XX。您提前购买了产品，
-也能记录更多独一无二的精彩时刻。但这个订单已经超出双11活动价保时效很长时间了，
-抱歉确实无法为您提供价保服务或退差价。<br><br>
-
-<span style='color:red;font-weight:bold;'>第三次礼貌挂机--15分钟礼貌挂机：</span>
-我们非常希望能协助您解决问题，但目前您的订单因超过价保时效很久，
-无法再进行价保，衷心希望您可以理解。如果您后续还有其他问题，欢迎您随时联系我们。
-先不打扰您了，祝您生活愉快，再见。
-`
-    },
-    "畅拍1050": {
-        "7天内": "1、JD自营：（京东平台-大疆创新京东自营旗舰店）走平台自助，按照签收后7天\n2、JD POP：（京东平台-大疆创新官方旗舰店）：走平台自助，按照提交订单时间\n3、其余2C官渠（天猫/抖音/小红书/拼多多/微信小店-大疆创新官方旗舰店）按照支付订单时间，其中天猫渠道可自助价保",
-"8-30天": "<div style=\"color:#E67E22;font-weight:700;\">【处理思路】先告知客户超过7天没有价保，若客户不接受，告知特殊申请价保方案，把两个方案同时提供让客户二选一，以上方案客户均不接受可以引导退货处理，但需要满足退货条件</div>\n<div style=\"color:#6C5CE7;font-weight:700;\">【退货条件】</div>\n<div style=\"color:#6C5CE7;\">手持摄影设备（签收次日起 30 天），如符合以下条件之一，可以申请退货：</div>\n<div style=\"color:#6C5CE7;\">√ 产品外包装、附件、赠品、说明书完整，并且没有任何人为损坏，不影响二次销售；</div>\n<div style=\"color:#6C5CE7;\">√ 发现产品存在非人为损坏的性能故障。</div>\n<div style=\"color:#6C5CE7;\">注意：手持设备激活可退</div>\n回复话术参考链接中（处理流程-非电商）：https://docs.djicorp.com/weboffice/l/somxmLGcr5irO    \n\n方案二选一：<span style='color:red;font-weight:bold;'>（注意：京东自营只能选择现金方案）</span>\n方案一：600元现金<span style='color:red;font-weight:bold;'>（如购买时间为9.10 20点-9.19 24点（已活动降价300元），提供450元现金）</span>\n方案二：mic mini 1拖2（价值699）/mic 3发射器（价值699）【二选一】",
-"30天以上": `
-<span style='color:red;font-weight:bold;'>无灰度<br>【处理原则】</span><br>
-<span style='color:red;font-weight:bold;'>1. 价保专线需直接处理闭环价保问题。</span><br>
-<span style='color:red;font-weight:bold;'>2. 如遇到明确表示恶意霸线场景（霸线≥15分钟），按如下思路和沟通节奏处理。然后走礼貌挂机流程（需报备TL审批，TL审批后登记至</span>
-<a href="https://docs.djicorp.com/weboffice/l/sd17qDgMfB0nA" target="_blank">https://docs.djicorp.com/weboffice/l/sd17qDgMfB0nA</a>）。<br>
-<span style='color:red;font-weight:bold;'>3. 升级客诉规范：</span><br>
-① 无风险场景尽量拦截，按照话术及方案澄清清楚价保原则，告知有方案/无方案，不升级客诉<br><br>
-② 如遇如下场景，可升级客诉处理（注：搜集客户姓名、电话、及客户信息升级客诉（客诉标签选择：电商-活动争议））。<br>
-客诉团队选择：除TP和维音客诉升级到LM消费客诉团队，其余团队接到客诉问题升级到自己所在团队的客诉。<br>
-</div><!-- 图片占位：门店类型一 --><div style=\"margin:1px 0;\"> <img src=\"https://terra-1-g.djicdn.com/eb222cbc4f4345e3a134199bab1f0894/133e3d7877f049769d11309b0ed71664.png\" alt=\"门店类型一图片\" style=\"max-width:100%;height:auto;\"</div>
-<span style='color:red;font-weight:bold;'>【参考话术】</span><br>
-<span style='color:red;font-weight:bold;'>第一次沟通--5分钟预警话术：</span>
-XX先生/女士，您的心情我完全理解，确实超出活动价保周期的情况会让您感到难受，
-但也帮您核查到由于您的订单已超过价保政策时间太久，所以也遗憾无法为您提供价保服务或退差价，
-辛苦您也可以谅解。<br><br>
-
-<span style='color:red;font-weight:bold;'>第二次主导沟通--10分钟再次强调价保话术：</span>
-非常理解您的心情，这边看到您的订单时间是XX。您提前购买了产品，
-也能记录更多独一无二的精彩时刻。但这个订单已经超出双11活动价保时效很长时间了，
-抱歉确实无法为您提供价保服务或退差价。<br><br>
-
-<span style='color:red;font-weight:bold;'>第三次礼貌挂机--15分钟礼貌挂机：</span>
-我们非常希望能协助您解决问题，但目前您的订单因超过价保时效很久，
-无法再进行价保，衷心希望您可以理解。如果您后续还有其他问题，欢迎您随时联系我们。
-先不打扰您了，祝您生活愉快，再见。
-`
-    },
-"其他": {
-    "7天内": "线上非授权<br>1.PDD 百亿补贴（品牌好货）购买需收集客户 SN 在 CC 保修盒子查询出库渠道，反馈“中国第三方电商线上代理客诉沟通群”确认是否授权；<br>2.知识库确认非授权店铺 <a href='https://wing.djicorp.com/user/knowledge/zh/2/00200024533' target='_blank'>点击查看</a>",
-    "8-30天": "线上非授权建议客户联系购买渠道，若客户要求 DJI 处理，正常拒绝客户，拒绝三次不认可升级客诉<br><br>第一次婉拒：<br>您好，查询到您所购买的产品来自非官方授权店铺。为了确保您能享受到最佳的售后服务和保障，我们建议您先联系购买店铺进行咨询和处理。感谢您的理解。<br><br>第二次婉拒：<br>非常抱歉，由于您的订单并非通过 DJI 官方渠道购买，我们确实无法为您处理补差价的请求。同时后续我们建议您通过官方授权渠道选购产品，这样可以享受到更丰富的促销活动和官方售后服务。感谢您的理解与支持。<br><br>第三次婉拒，不接受即可升级客诉：<br>非常抱歉当前无法为您解决您的问题，也希望您能谅解。为了更好地为您解决问题，请您提供您的姓名和联系方式，我们将反馈至服务专员跟进。服务专员将在 1-2 个工作日内与您电话联系，感谢您的支持与理解。<br><br>注：搜集客户姓名、电话、客户信息升级客诉（客诉标签选择：电商-活动争议）。",
-    "30天以上": "线上非授权建议客户联系购买渠道，若客户要求 DJI 处理，正常拒绝客户，拒绝三次不认可升级客诉<br><br>第一次婉拒：<br>您好，查询到您所购买的产品来自非官方授权店铺。为了确保您能享受到最佳的售后服务和保障，我们建议您先联系购买店铺进行咨询和处理。感谢您的理解。<br><br>第二次婉拒：<br>非常抱歉，由于您的订单并非通过 DJI 官方渠道购买，我们确实无法为您处理补差价的请求。同时后续我们建议您通过官方授权渠道选购产品，这样可以享受到更丰富的促销活动和官方售后服务。感谢您的理解与支持。<br><br>第三次婉拒，不接受即可升级客诉：<br>非常抱歉当前无法为您解决您的问题，也希望您能谅解。为了更好地为您解决问题，请您提供您的姓名和联系方式，我们将反馈至服务专员跟进。服务专员将在 1-2 个工作日内与您电话联系，感谢您的支持与理解。<br><br>注：搜集客户姓名、电话、客户信息升级客诉（客诉标签选择：电商-活动争议）。"
-}
-};
-
-
-const specialScheme = {
-"snRefurbished": `
-<div style="color:#2563EB;font-weight:bold;">参考话术</div>
-<div style="background:#f9fafb;padding:6px;border-radius:4px;">
-请您放心，您在官方正规渠道购买的产品，是符合出厂标准的，品质可靠的全新机，并享受完整的官方质保。<br>
-为了进一步保障您的权益，所有官方翻新机均在官网指定页面独立销售，且产品外包装带有“RB”标识，与全新产品明确区分。<br>
-感谢您的理解与支持。
-</div><br>
-
-<div style="color:#E67E22;font-weight:bold;">注意事项</div>
-<div style="background:#fffbea;padding:6px;border-radius:4px;">
-若客户吐槽 Osmo Pocket 3 具体的外观问题，请参考知识库处理：<br>
-<a href='https://wing.djicorp.com/user/knowledge/zh/2/00201003652' target='_blank'>点击查看</a>
-</div>
-`,
-
-"malicious abuse": `
-<div style="color:#2563EB;font-weight:bold;">参考话术</div>
-<div style="background:#f9fafb;padding:6px;border-radius:4px;">
-X先生/女士，我们非常希望帮您解决问题，但鉴于您持续辱骂的不文明行为，我们已无法与您正常沟通，为了不占用其他客户的等待时间，我将结束当前对话。<br>
-后续如果您希望沟通产品使用和技术咨询方面的问题，可以再次联系我们。感谢您的理解。<br>
-</div>
-`,
-
-
-"Order meets price guarantee": `
-<div style="color:#2563EB;font-weight:bold;">参考话术</div>
-<div style="background:#f9fafb;padding:6px;border-radius:4px;line-height:1.5;">
-1、双十一的订单热度远超预期，部分机型库存无货导致价保申请可能超时，我们已安排专人加急处理您的仅退款申请，可能需要一些时间，请您再耐心等待下呢~<br><br>
-2、因为产品无货导致您的订单需要人工帮您处理的，已经安排专人在轮班处理您的价保申请啦，还请再多给我们一点点时间呢~<br><br>
-3、看到您的价保申请时我们也特别着急的，感动您对我们的支持呢，目前已经协调专人在 24 小时轮班处理了，您可以在 <a href="https://my.dji.com/orders?from=site-nav&appId=store" target="_blank" style="color:#2563EB;text-decoration:underline;">我的订单</a> 页刷新状态查看进度呢。这次是我们准备不足，还请您谅解呢。
-`,
-
-"Request a return and refund": `
-<div style="color:#2563EB;font-weight:bold;">参考话术</div>
-<div style="background:#f9fafb;padding:6px;border-radius:4px;line-height:1.5;">
-<strong style="color:#E67E22;">天猫、抖音：</strong><br>
-您好，因双十一订单量激增，售后处理节奏短期内受到影响，由此给您带来不便，我们深表歉意。为避免仓库检测前的误判与遗漏，我们可能会对少量退款申请先行做暂时拒绝，待仓库完成核验后（签收后 1–5 个工作日内），会主动为您退款（拒绝后7天内商家有直接退款选项），请您放心。<br>
-我们非常重视您的体验，您的售后诉求已经在持续处理中；对由此带来的不便，我们再次致歉，感谢您的包容与理解。<br><br>
-<strong style="color:#E67E22;">DJI官方商城、京东POP：</strong><br>
-您好，因双十一订单量激增，售后处理节奏短期内受到影响，由此给您带来不便，我们深表歉意。为避免仓库检测前的误判与遗漏，我们可能会对少量退款申请先行做暂时拒绝，待仓库完成核验后（签收后 1–5 个工作日内），欢迎您重新提交退款申请，我们将尽快为您处理。<br>
-我们非常重视您的体验，您的售后诉求已经在持续处理中；对由此带来的不便，我们再次致歉，感谢您的包容与理解。
-</div>
-`,
-
-
-"Official Account": `
-<div style="color:#2563EB;font-weight:bold;">参考话术</div>
-<div style="background:#f9fafb;padding:6px;border-radius:4px;line-height:1.5;">
-您好，本次价格调整是大疆为“双十一”推出的常规促销活动。我们通过相关渠道对此次活动进行了预告说明，这样也能帮助用户更好地了解活动内容，做出更适合自己的购买决策。<br><br>
-同时我们也非常重视每位用户对此次活动的关注和讨论，目前我们正在积极通过各个渠道沟通，为用户提供清晰的指引和必要的购买及使用支持。我们也将持续倾听各方的声音，不断优化我们的服务和方案。<br><br>
-您当前是遇到什么问题了吗？您可以告诉我，我会协助您处理的。
-</div><br>
-<div style="color:#E67E22;font-weight:bold;">注意事项</div>
-<div style="background:#fffbea;padding:6px;border-radius:4px;line-height:1.5;">
-若客户表明是媒体或记者身份，请参考知识库：客诉升级规范V3.0【2025年5月19日启用】-6）媒体来电。<br>
-<a href="https://wing.djicorp.com/user/knowledge/zh/2/00201004261" target="_blank">点击查看</a>
-</div>
-`
-
-};
-
-
-const l2Scheme = {
-    "电话未接通": `
-<div style="color:#2563EB;font-weight:bold;">思路</div>
-<div style="background:#f0f9ff;padding:8px;border-radius:6px;">
-人工主动发短信
-</div>
-<div style="color:#2563EB;font-weight:bold;margin-top:8px;">短信模板</div>
-<div style="background:#f9fafb;padding:8px;border-radius:6px;line-height:1.6;">
-尊敬的客户您好，我是为您处理价保咨询的服务专员。刚才多次尝试联系您但未成功。<br>
-我们非常理解您对价格变动的关注，也很重视您的订单。但很抱歉，经过多次核查，您的订单时间已经超出活动价保周期，本次我们确实无法为您提供价保服务，衷心希望您能理解。<br>
-如果您需要其他帮助，欢迎通过“大疆”公众号联系我们，我们会竭诚为您提供服务，感谢您的支持。
-</div>
-`,
-
-    "电话已接通": `
-<div style="color:#2563EB;font-weight:bold;">思路</div>
-<div style="background:#f0f9ff;padding:8px;border-radius:6px;">
-主动说明没有及时联系的原因并致歉，告知没价保并重点安抚情绪。<br>
-若客户抱怨联系时效/吐槽一直没联系，请优先使用解释+安抚话术。<br>
-若客户不接受，可赠送品牌周边礼品。话术①②③适用场景一致，按需使用。
-</div>
-<div style="color:#2563EB;font-weight:bold;margin-top:8px;">话术①</div>
-<div style="background:#f9fafb;padding:8px;border-radius:6px;line-height:1.6;">
-XX先生/女士，您好。我是为您处理价保咨询的服务专员XXX（工号xx）。双十一的订单量比较多，咱们服务专员也是在轮班加急处理。非常抱歉没能及时跟您联系。<br>
-我们很重视您的订单，并且多次核查了相关信息。这个订单已经超出活动价保周期，我们确实无法为您提供价保服务了，衷心希望您能理解。<br>
-（若客户抱怨联系时效，或吐槽一直没联系，请优先参考话术解释安抚。若客户不接受，可赠送品牌周边礼品）<br>
-非常感谢您对我们的支持，我们特地为您申请了一份精美的品牌周边礼品。这边尽快为您安排邮寄。您看可以吗？
-</div>
-<div style="color:#2563EB;font-weight:bold;margin-top:8px;">话术②</div>
-<div style="background:#f9fafb;padding:8px;border-radius:6px;line-height:1.6;">
-XX先生/女士，您好。我是为您处理价保咨询的服务专员XXX（工号xx）。这边多次核实了您的订单，已经超出活动价保周期，没办法为您提供价保服务了。衷心希望您能理解。<br>
-双十一的订单量比较多，咱们服务专员也在尽全力加速处理。没能及时跟您联系，实在抱歉。<br>
-（若客户抱怨联系时效，或吐槽一直没联系，请优先参考话术解释安抚。若客户不接受，可赠送品牌周边礼品）<br>
-我们非常重视您的反馈，我也想为您赠送一份精美的品牌周边礼品。您看可以的话，我尽快为您安排邮寄。
-</div>
-<div style="color:#2563EB;font-weight:bold;margin-top:8px;">话术③</div>
-<div style="background:#f9fafb;padding:8px;border-radius:6px;line-height:1.6;">
-XX先生/女士，您好。我是为您处理价保咨询的服务专员XXX（工号xx）。很抱歉现在才联系您。这次活动非常火爆，服务专员也是在加班加点处理咱们客户的咨询。<br>
-这边反复核查了您的订单日期，距离价保周期确实比较久了，无法再为您提供价保服务。<br>
-（若客户抱怨联系时效，或吐槽一直没联系，请优先参考话术解释安抚。若客户不接受，可赠送品牌周边礼品）<br>
-我们也非常感谢您的耐心等待与理解。我特地为您申请了一份精美的品牌周边礼品。这就为您安排邮寄。您看可以吗？
-</div>
-`,
-
-    "用户接受周边，但要求更多补偿": `
-<div style="background:#fff7ed;padding:8px;border-radius:6px;line-height:1.6;color:#b45309;">
-您的心情我完全理解，也特别能感同身受。但咱们订单购买的时间比较早，也确实是提前享受到产品了。<br>
-目前为您申请的品牌周边礼品，是我们尽力为您申请到的补偿了。衷心希望您能理解。<br>
-咱们结束通话后，我就去为您安排邮寄礼品，您看可以吗？
-</div>
-`,
-
-    "用户接受周边礼品": `
-<div style="background:#f0fdf4;padding:8px;border-radius:6px;line-height:1.6;color:#166534;">
-好的，非常感谢您的理解，也希望您能继续支持大疆。<br>
-如果您在后续使用产品的过程中有任何其他疑问或需要帮助的地方，欢迎您随时联系我们。<br>
-再次感谢您的理解，祝您生活愉快！
-</div>
-`,
-
-    "特殊场景--霸线客户": `
-<div style="color:#dc2626;font-weight:bold;">处理原则</div>
-<div style="background:#fef2f2;padding:8px;border-radius:6px;line-height:1.6;">
-1. 如遇到明确表示恶意霸线场景（霸线≥15分钟），按如下思路和沟通节奏处理，然后走礼貌挂机流程（需报备TL，并登记至：
-<a href="https://docs.djicorp.com/weboffice/l/sd17qDgMfB0nA" target="_blank">https://docs.djicorp.com/weboffice/l/sd17qDgMfB0nA</a>）。<br>
-<div style="color:#dc2626;font-weight:bold;">注意：风险场景不要强制挂断电话！</div>
-2. 升级客诉规范：<br>
-① 无风险场景尽量拦截，按照话术及方案澄清价保原则，告知有方案/无方案，不升级客诉。<br>
-② 如遇如下场景，可升级客诉处理（注：搜集客户姓名、电话、及客户信息升级客诉（客诉标签选择：电商-活动争议））。<br>
-客诉团队选择：除TP和维音客诉升级到LM消费客诉团队，其余团队接到客诉问题升级到自己所在团队的客诉（支援人员建的投诉案例，放在支援团队名下）。
-</div>
-    <img src="https://terra-1-g.djicdn.com/eb222cbc4f4345e3a134199bab1f0894/133e3d7877f049769d11309b0ed71664.png"
-         style="max-width:100%;height:auto;margin:0;padding:0;">
-
-<div style="color:#FF0000;"><b>【处理思路】</b></div>
-
-<!-- 类型一：线上订单 -->
-<div style="border:2px solid #fca5a5;background:#fff5f5;border-radius:8px;padding:14px;margin-bottom:18px;">
-  <div style="color:#FF0000;font-weight:bold;font-size:16px;">类型一：线上订单</div>
-
-  <!-- 官方渠道购买 -->
-  <div style="border:1px solid #fecaca;background:#ffffff;border-radius:6px;padding:10px;margin-top:10px;">
-    <div style="color:#FF0000;font-weight:bold;">【参考话术】霸线话术 -- 线上官方渠道购买</div>
-
-    <div style="color:#FF0000;font-weight:bold;margin-top:6px;">第一次沟通--5分钟预警话术：</div>
-    <div style="color:#000;">XX先生/女士，您的心情我完全理解，确实超出活动价保周期的情况会让您感到难受，但也帮您核查到由于您的订单已超过价保政策时间太久，所以也遗憾无法为您提供价保服务或退差价，辛苦您也可以谅解。</div>
-
-    <div style="color:#FF0000;font-weight:bold;margin-top:6px;">第二次主导沟通--10分钟再次强调价保话术：</div>
-    <div style="color:#000;">非常理解您的心情，这边看到您的订单时间是XX。您提前购买了产品，也能记录更多独一无二的精彩时刻。但这个订单已经超出双11活动价保时效很长时间了，抱歉确实无法为您提供价保服务或退差价。</div>
-
-    <div style="color:#FF0000;font-weight:bold;margin-top:6px;">第三次礼貌挂机--15分钟礼貌挂机：</div>
-    <div style="color:#000;">我们非常希望能协助您解决问题，但目前您的订单因超过价保时效很久，无法再进行价保，衷心希望您可以理解。如果您后续还有其他问题，欢迎您随时联系我们。先不打扰您了，祝您生活愉快，再见。</div>
-  </div>
-
-  <!-- 线上非官方渠道购买 -->
-  <div style="border:1px solid #fecaca;background:#ffffff;border-radius:6px;padding:10px;margin-top:10px;">
-    <div style="color:#FF0000;font-weight:bold;">【参考话术】霸线话术 -- 线上非官方渠道购买</div>
-
-    <div style="color:#FF0000;font-weight:bold;margin-top:6px;">第一次沟通--5分钟预警话术：</div>
-    <div style="color:#000;">您好，查询到您的产品不是从官方渠道购买，为了确保您能享受到最佳的售后服务和保障，我们建议您先联系购买店铺进行咨询和处理。感谢您的理解。</div>
-
-    <div style="color:#FF0000;font-weight:bold;margin-top:6px;">第二次主导沟通--10分钟再次强调价保话术：</div>
-    <div style="color:#000;">我非常理解您的心情，但由于不同渠道的活动政策可能会有所差异，我们无法直接为您提供价保服务。还请您联系购买店铺进行协商处理。</div>
-
-    <div style="color:#FF0000;font-weight:bold;margin-top:6px;">第三次礼貌挂机--15分钟礼貌挂机：</div>
-    <div style="color:#000;">明白您的诉求，我们也非常希望能协助您。但非官方渠道购买的产品，我们确实无法为您处理价需求。还是麻烦您和店铺直接联系，这样能尽量节省您的时间，您的诉求也能得到尽快处理。如果您后续还有其他问题，欢迎您随时联系我们。先不打扰您了，祝您生活愉快，再见。</div>
-  </div>
-</div>
-
-<!-- 类型二：线下订单 -->
-<div style="border:2px solid #fca5a5;background:#fff5f5;border-radius:8px;padding:14px;">
-  <div style="color:#FF0000;font-weight:bold;font-size:16px;">类型二：线下订单</div>
-
-  <div style="color:#000;margin-top:1px;">请客户联系门店协商处理，并登记在表格中 
-    <a href="https://docs.djicorp.com/weboffice/l/ckJUyBPOSNn4" target="_blank">
-      https://docs.djicorp.com/weboffice/l/ckJUyBPOSNn4
-    </a>
-  </div>
-
-  <div style="color:#000;margin-top:1px;">搜集信息模板：</div>
-  <div style="color:#000;">【购买门店】：省市+门店具体名称</div>
-  <div style="color:#000;">【购买产品型号】：</div>
-  <div style="color:#000;">【产品SN】：</div>
-  <div style="color:#000;">【姓名】：</div>
-  <div style="color:#000;">【联系方式】：电话</div>
-  <div style="color:#000;">【购买凭证】：</div>
-
-  <div style="color:#FF0000;font-weight:bold;margin-top:10px;">【参考话术】霸线话术</div>
-
-  <div style="color:#FF0000;font-weight:bold;margin-top:6px;">第一次沟通--5分钟预警话术：</div>
-  <div style="color:#000;">您好，查询到您的产品不是从线上官方渠道购买，为了确保您能享受到最佳的售后服务和保障，我们建议您先联系购买店铺进行咨询和处理。感谢您的理解。</div>
-
-  <div style="color:#FF0000;font-weight:bold;margin-top:6px;">第二次主导沟通--10分钟再次强调价保话术：</div>
-  <div style="color:#000;">我非常理解您的心情，但由于不同渠道的活动政策可能会有所差异，我们无法直接为您提供价保服务。还请您联系购买店铺进行协商处理。</div>
-
-  <div style="color:#FF0000;font-weight:bold;margin-top:6px;">第三次礼貌挂机--15分钟礼貌挂机：非授权门店：</div>
-  <div style="color:#000;">明白您的诉求，我们也非常希望能协助您。但非官方渠道购买的产品，我们确实无法为您处理价保需求。还是麻烦您和门店直接联系，这样能尽量节省您的时间，您的诉求也能得到尽快处理。如果您后续还有其他问题，欢迎您随时联系我们。先不打扰您了，祝您生活愉快，再见。</div>
-
-  <div style="color:#FF0000;font-weight:bold;margin-top:6px;">第三次礼貌挂机--15分钟礼貌挂机：授权门店（除山姆门店）：</div>
-  <div style="color:#000;">明白您的诉求，作为消费者我也非常理解您此刻的感受，我会帮您详细记录并及时转达给门店，确保门店能了解情况并和您沟通，您这边请保持电话畅通，耐心等待下工作人员和您联系，也特别感谢您的耐心和理解，祝您生活愉快，再见。</div>
-
-  <div style="color:#FF0000;font-weight:bold;margin-top:6px;">第三次礼貌挂机--15分钟礼貌挂机：授权门店（山姆门店）</div>
-  <div style="color:#000;">明白您的诉求了，为保障山姆真实零售会员的权益，非常抱歉我们无法将您的私人信息及诉求转达给门店。请您直接到山姆门店咨询品牌促销员及电器区域人员。感谢您的耐心和理解，祝您生活愉快，再见。</div>
-</div>
-`
-};
-
-
-
-
-const offlineScheme = {
-"价保机型": {
-
-
-"线下授权门店-非KA": {
-"10月2日--10月8日": "<div style='color:#E67E22;font-weight:700;'>请客户联系对应门店沟通处理。</div>\n\
-<div style='color:#2563EB;font-weight:700;'>线下授权门店查询链接：</div>\n\
-<div style='color:#2563EB;'><a href='https://docs.djicorp.com/weboffice/l/cctn2shsl' target='_blank'>https://docs.djicorp.com/weboffice/l/cctn2shsl</a>（可下载本地查询）</div>\n\
-<div style='color:#2563EB;font-weight:700;'>注意：若表格查询不到，按如下方式：</div>\n\
-<div style='color:#6B7280;'>① 在保修盒子中查询出货信息。若客户为 <span style='color:red;font-weight:bold;'>北京神州数码有限公司</span>，则是授权门店 -- KA渠道<br></div>\
-<div style='margin:1px 0;'><img src='https://terra-1-g.djicdn.com/eb222cbc4f4345e3a134199bab1f0894/1217fe2ab15446b1ac89cfa11373bf1d.png' alt='门店类型一图片' style='max-width:100%;height:auto;'></div>\
-<div style='color:#6B7280;'>② 其他场景，请先升级 TL 发在 GT 群【CC一线&区域经理沟通】，请区域经理核实。</div>\n\
-<div style='margin-top:4px;color:#6B7280;font-weight:700;'>参考话术：</div>\n\
-<div style='color:#6B7280;'>您好，我们查询了您的订单，对应门店应该会有相应的政策方案，建议您尽快联系门店沟通处理。</div>",
-
-"9月9日--10月1日": `
-<div style="margin:0;padding:0;line-height:1.3;color:#2563EB;font-weight:700;">
-    线下授权门店查询链接：
-    <a href="https://docs.djicorp.com/weboffice/l/cctn2shsl" target="_blank">https://docs.djicorp.com/weboffice/l/cctn2shsl</a>（可下载本地查询）
-</div>
-<div style="margin:0;padding:0;line-height:1.3;color:#E67E22;font-weight:700;">
-    注意：若表格查询不到，不确定是否是授权门店，可先升级TL发在GT群【CC一线&区域经理沟通】，请区域经理核实。
-</div>
-
-<div style="margin:0;padding:0;line-height:1.3;color:red;font-weight:bold;">
-    门店类型一：非KA渠道--【ARS门店、非ARS门店、京东超体】
-    <img src="https://terra-1-g.djicdn.com/eb222cbc4f4345e3a134199bab1f0894/98847385c7d248fcb7523cba545c3aaf.png"
-         style="max-width:100%;height:auto;margin:0;padding:0;">
-    <span style="color:#E67E22;font-weight:700;">【处理原则】</span><br> 1. 价保专线需直接处理闭环价保问题。<br>
-    2. 如遇到明确表示恶意霸线场景（霸线≥15分钟），按如下思路和沟通节奏处理，然后走礼貌挂机流程（需报备TL审批，TL审批后登记至：
-    <a href="https://docs.djicorp.com/weboffice/l/sd17qDgMfB0nA" target="_blank">https://docs.djicorp.com/weboffice/l/sd17qDgMfB0nA</a>）。<br>
-    3. 升级客诉规范：<br>
-    ① 无风险场景尽量拦截，按照话术及方案澄清价保原则，告知有方案/无方案，不升级客诉。<br>
-    ② 如遇如下场景，可升级客诉处理（注：搜集客户姓名、电话、及客户信息升级客诉（客诉标签选择：电商-活动争议））。<br>
-    客诉团队选择：除TP和维音客诉升级到LM消费客诉团队，其余团队接到客诉问题升级到自己所在团队的客诉。
-    <img src="https://terra-1-g.djicdn.com/eb222cbc4f4345e3a134199bab1f0894/133e3d7877f049769d11309b0ed71664.png"
-         style="max-width:100%;height:auto;margin:0;padding:0;">
-    <span style="color:#E67E22;font-weight:700;">【处理思路】</span><br> ① 若客户不接受/有争议，请搜集信息登记在表格中
-    <a href="https://docs.djicorp.com/weboffice/l/ckJUyBPOSNn4" target="_blank">https://docs.djicorp.com/weboffice/l/ckJUyBPOSNn4</a><br>
-    ② 若客户霸线、或已登记信息，但客户重复找回线上，参考如下话术。并在表格中记录对应次数（找回1次，次数+1；霸线1次，次数+1）
-    <img src="https://terra-1-g.djicdn.com/eb222cbc4f4345e3a134199bab1f0894/f68c4e1c76ac459089a6bf8f344e7b53.jpg"
-         style="max-width:100%;height:auto;margin:0;padding:0;">
-    <span style="color:#E67E22;font-weight:700;">【搜集信息模板】</span><br> 【购买门店】：省市+门店具体名称<br>
-    【购买产品型号】：<br>
-    【产品SN】：<br>
-    【姓名】：<br>
-    【联系方式】：电话<br>
-    【购买凭证】：<br><br>
-<span style="color:#E67E22;font-weight:700;">【参考话术】</span><br>
-
-<span style="color:red;font-weight:bold;">第一次沟通--5分钟预警话术：</span>
-<span style="color:#6B7280;">您好，我们查询了您的订单，对应门店应该会有相应的政策方案，建议您尽快联系门店沟通处理。</span><br>
-
-<span style="color:red;font-weight:bold;">第二次主导沟通--10分钟再次强调价保话术：</span>
-<span style="color:#6B7280;">您可以先联系授权门店，门店的最新方案会由店里的工作人员结合实际情况来和您沟通。我们也是希望您咨询的问题能得到尽快处理，所以建议您和门店直接联系，这样能尽量节省您的时间。</span><br>
-
-<span style='color:red;font-weight:bold;'>第三次礼貌挂机--15分钟礼貌挂机：</span>
-<span style="color:#6B7280;">明白您的诉求，作为消费者我也非常理解您此刻的感受，我会帮您详细记录并及时转达给门店，确保门店能了解情况并和您沟通，您这边请保持电话畅通，耐心等待下工作人员和您联系，也特别感谢您的耐心和理解，祝您生活愉快，再见。</span>
-</div>
-`,
-
-"9月9日之前": `
-<div style="color:#2563EB;font-weight:700;">线下授权门店查询链接：<a href="https://docs.djicorp.com/weboffice/l/cctn2shsl" target="_blank">https://docs.djicorp.com/weboffice/l/cctn2shsl</a>（可下载本地查询）</div>
-<div style="margin-top:1px;color:#E67E22;font-weight:700;">注意：若表格查询不到，不确定是否是授权门店，可先升级TL发在GT群【CC一线&区域经理沟通】，请区域经理核实。</div>
-<div style="margin-top:1px;color:#E67E22;font-weight:700;">【处理原则】</div>
-<div style="color:#6B7280;">1. 价保专线需直接处理闭环价保问题。<br>2. 如遇到明确表示恶意霸线场景（霸线≥15分钟），按如下思路和沟通节奏处理，然后走礼貌挂机流程（需报备TL审批，TL审批后登记至：<a href="https://docs.djicorp.com/weboffice/l/sd17qDgMfB0nA" target="_blank">https://docs.djicorp.com/weboffice/l/sd17qDgMfB0nA</a>）。<br>3. 升级客诉规范：<br>① 无风险场景尽量拦截，按照话术及方案澄清价保原则，告知有方案/无方案，不升级客诉。<br>② 如遇如下场景，可升级客诉处理（注：搜集客户姓名、电话、及客户信息升级客诉（客诉标签选择：电商-活动争议））。<br>客诉团队选择：除TP和维音客诉升级到LM消费客诉团队，其余团队接到客诉问题升级到自己所在团队的客诉。</div></div><!-- 图片占位：门店类型一 --><div style=\"margin:1px 0;\"> <img src=\"https://terra-1-g.djicdn.com/eb222cbc4f4345e3a134199bab1f0894/133e3d7877f049769d11309b0ed71664.png\" alt=\"门店类型一图片\" style=\"max-width:100%;height:auto;\"</div>
-<div style="margin-top:1px;color:#E67E22;font-weight:700;">【处理思路】</div>
-<div style="color:#6B7280;">请客户联系门店协商处理，并登记在表格中：<a href="https://docs.djicorp.com/weboffice/l/ckJUyBPOSNn4" target="_blank">https://docs.djicorp.com/weboffice/l/ckJUyBPOSNn4</a></div>
-<div style="margin-top:1px;color:#E67E22;font-weight:700;">【搜集信息模板】</div>
-<div style="color:#6B7280;">【购买门店】：省市+门店具体名称<br>【购买产品型号】：<br>【产品SN】：<br>【姓名】：<br>【联系方式】：电话<br>【购买凭证】：</div>
-<div style="margin-top:8px;color:#E67E22;font-weight:700;">【参考话术】</div>
-<div style="color:#6B7280;"><span style='color:red;font-weight:bold;'>第一次沟通--5分钟预警话术：</span><br>XX先生/女士，抱歉给你带来不好的体验，我们推出这次双十一活动以及预告也是为了更好回馈喜欢大疆产品的消费者，这次降价因为时间上排布让您有不好的体验，真的很对不起。公司也是在第一时间重视消费者的反馈，请给我们一些处理时间。<br>同时看到您是在线下购买的产品，不同地区的线下授权门店在活动方案上（价保、优惠等）和线上官方店铺会有一些差异，还是得麻烦您和门店进行沟通。</div>
-<div style="color:#6B7280;"><span style='color:red;font-weight:bold;'>第二次主导沟通--10分钟再次强调价保话术：</span><br>您可以先联系授权门店，门店的最新方案会由店里的工作人员结合实际情况来和您沟通。我们也是希望您咨询的问题能得到尽快处理，所以建议您和门店直接联系，这样能尽量节省您的时间。</div>
-<div style="color:#6B7280;"><span style='color:red;font-weight:bold;'>第三次礼貌挂机--15分钟礼貌挂机：授权门店（除山姆门店）：</span><br>明白您的诉求，作为消费者我也非常理解您此刻的感受，我会帮您详细记录并及时转达给门店，确保门店能了解情况并和您沟通，您这边请保持电话畅通，耐心等待下工作人员和您联系，也特别感谢您的耐心和理解，祝您生活愉快，再见。</div>
-<div style="color:#6B7280;"><span style='color:red;font-weight:bold;'>第三次礼貌挂机--15分钟礼貌挂机：授权门店（山姆门店）：</span><br>明白您的诉求了，为保障山姆真实零售会员的权益，非常抱歉我们无法将您的私人信息及诉求转达给门店。请您直接到山姆门店咨询品牌促销员及电器区域人员。感谢您的耐心和理解，祝您生活愉快，再见。</div>
-`,
-},
-
-"线下授权门店-KA": {
-"10月2日--10月8日": "<div style='color:#E67E22;font-weight:700;'>请客户联系对应门店沟通处理。</div>\n\
-<div style='color:#2563EB;font-weight:700;'>线下授权门店查询链接：</div>\n\
-<div style='color:#2563EB;'><a href='https://docs.djicorp.com/weboffice/l/cctn2shsl' target='_blank'>https://docs.djicorp.com/weboffice/l/cctn2shsl</a>（可下载本地查询）</div>\n\
-<div style='color:#2563EB;font-weight:700;'>注意：若表格查询不到，按如下方式：</div>\n\
-<div style='color:#6B7280;'>① 在保修盒子中查询出货信息。若客户为 <span style='color:red;font-weight:bold;'>北京神州数码有限公司</span>，则是授权门店 -- KA渠道<br></div>\
-<div style='margin:1px 0;'><img src='https://terra-1-g.djicdn.com/eb222cbc4f4345e3a134199bab1f0894/1217fe2ab15446b1ac89cfa11373bf1d.png' alt='门店类型一图片' style='max-width:100%;height:auto;'></div>\
-<div style='color:#6B7280;'>② 其他场景，请先升级 TL 发在 GT 群【CC一线&区域经理沟通】，请区域经理核实。</div>\n\
-<div style='margin-top:4px;color:#6B7280;font-weight:700;'>参考话术：</div>\n\
-<div style='color:#6B7280;'>您好，我们查询了您的订单，对应门店应该会有相应的政策方案，建议您尽快联系门店沟通处理。</div>",
-
-
-
-
-"9月9日--10月1日": `
-<div style="margin:0;padding:0;line-height:1.3;color:#2563EB;font-weight:700;">
-    线下授权门店查询链接：
-    <a href="https://docs.djicorp.com/weboffice/l/cctn2shsl" target="_blank">https://docs.djicorp.com/weboffice/l/cctn2shsl</a>（可下载本地查询）
-</div>
-<div style="margin:0;padding:0;line-height:1.3;color:#E67E22;font-weight:700;">注意：若表格查询不到，按如下方式：</div>
-<div style="margin:0;padding:0;line-height:1.3;color:#6B7280;">
-    ① 在保修盒子中查询出货信息。若客户为 <span style="color:red;font-weight:bold;">北京神州数码有限公司</span>，则是授权门店 -- KA渠道
-</div>
-<div style="margin:0;padding:0;line-height:1.3;color:#6B7280;">
-    <img src="https://terra-1-g.djicdn.com/eb222cbc4f4345e3a134199bab1f0894/1217fe2ab15446b1ac89cfa11373bf1d.png" style="max-width:100%;height:auto;margin:0;padding:0;">
-    ② 其他场景，请先升级 TL 发在 GT 群【CC一线&区域经理沟通】，请区域经理核实。
-</div>
-<div style="margin:0;padding:0;line-height:1.3;color:red;font-weight:bold;">
-    门店类型二：【KA渠道】-- 山姆、顺电、苹果授权渠道等
-    <img src="https://terra-1-g.djicdn.com/eb222cbc4f4345e3a134199bab1f0894/492d5f8ae3774b478fa156fb5dcac597.jpg" style="max-width:100%;height:auto;margin:0;padding:0;">
-    <span style="color:#E67E22;font-weight:700;">【处理原则】</span><br>
-    1. 价保专线需直接处理闭环价保问题。<br>
-    2. 如遇到明确表示恶意霸线场景（霸线≥15分钟），按如下思路和沟通节奏处理，然后走礼貌挂机流程（需报备 TL 审批，TL 审批后登记至：
-    <a href="https://docs.djicorp.com/weboffice/l/sd17qDgMfB0nA" target="_blank">https://docs.djicorp.com/weboffice/l/sd17qDgMfB0nA</a>）。<br>
-    3. 升级客诉规范：<br>
-    ① 无风险场景尽量拦截，按照话术及方案澄清价保原则，告知有方案/无方案，不升级客诉。<br>
-    ② 如遇如下场景，可升级客诉处理（注：搜集客户姓名、电话、及客户信息升级客诉（客诉标签选择：电商-活动争议））。<br>
-    客诉团队选择：除 TP 和维音客诉升级到 LM 消费客诉团队，其余团队接到客诉问题升级到自己所在团队的客诉。
-    <img src="https://terra-1-g.djicdn.com/eb222cbc4f4345e3a134199bab1f0894/ca4c79d77a164f5bb900e193d7a4c489.png" style="max-width:100%;height:auto;margin:0;padding:0;">
-    <span style="color:#E67E22;font-weight:700;">【处理思路】</span><br>
-    ① 若客户不接受/有争议，请搜集信息登记在表格中 <a href="https://docs.djicorp.com/weboffice/l/ckJUyBPOSNn4" target="_blank">https://docs.djicorp.com/weboffice/l/ckJUyBPOSNn4</a><br>
-    ② 若客户霸线、或已登记信息，但客户重复找回线上，参考如下话术。并在表格中记录对应次数（找回1次，次数+1；霸线1次，次数+1）
-    <img src="https://terra-1-g.djicdn.com/eb222cbc4f4345e3a134199bab1f0894/c0b6780efd274a51b92938120085afc7.jpg" style="max-width:100%;height:auto;margin:0;padding:0;">
-    <span style="color:#E67E22;font-weight:700;">【搜集信息模板】</span><br><br>
-    【购买门店】：省市+门店具体名称<br>
-    【购买产品型号】：<br>
-    【产品SN】：<br>
-    【姓名】：<br>
-    【联系方式】：电话<br>
-    【购买凭证】：<br><br>
-<span style="color:#E67E22;font-weight:700;">【参考话术】</span><br>
-<span style="color:red;font-weight:bold;">第一次沟通--5分钟预警话术：</span><br>
-<span style="color:#6B7280;">抱歉给你带来不好的体验。这边看到您是在线下购买的产品，不同地区的线下授权门店在活动方案上（价保、优惠等）和线上官方店铺会有一些差异，还是得麻烦您和门店进行沟通。</span><br>
-
-<span style="color:red;font-weight:bold;">第二次主导沟通--10分钟再次强调价保话术：</span><br>
-<span style="color:#6B7280;">您可以先联系授权门店，门店的最新方案会由店里的工作人员结合实际情况来和您沟通。我们也是希望您咨询的问题能得到尽快处理，所以建议您和门店直接联系，这样能尽量节省您的时间。</span><br>
-
-<span style='color:red;font-weight:bold;'>第三次礼貌挂机--15分钟礼貌挂机：授权门店（除山姆门店）：</span><br>
-<span style="color:#6B7280;">明白您的诉求，作为消费者我也非常理解您此刻的感受，我会帮您详细记录并及时转达给门店，确保门店能了解情况并和您沟通，您这边请保持电话畅通，耐心等待下工作人员和您联系，也特别感谢您的耐心和理解，祝您生活愉快，再见。</span><br>
-
-<span style='color:red;font-weight:bold;'>第三次礼貌挂机--15分钟礼貌挂机：授权门店（山姆门店）：</span><br>
-<span style="color:#6B7280;">明白您的诉求了，为保障山姆真实零售会员的权益，非常抱歉我们无法将您的私人信息及诉求转达给门店。请您直接到山姆门店咨询品牌促销员及电器区域人员。感谢您的耐心和理解，祝您生活愉快，再见。</span>
-</div>
-`,
-
-
-"9月9日之前": `
-<div style="color:#2563EB;font-weight:700;">线下授权门店查询链接：<a href="https://docs.djicorp.com/weboffice/l/cctn2shsl" target="_blank">https://docs.djicorp.com/weboffice/l/cctn2shsl</a>（可下载本地查询）</div>
-<div style="margin-top:8px;color:#E67E22;font-weight:700;">注意：若表格查询不到，不确定是否是授权门店，可先升级TL发在GT群【CC一线&区域经理沟通】，请区域经理核实。</div>
-<div style="margin-top:8px;color:#E67E22;font-weight:700;">【处理原则】</div>
-<div style="color:#6B7280;">1. 价保专线需直接处理闭环价保问题。<br>2. 如遇到明确表示恶意霸线场景（霸线≥15分钟），按如下思路和沟通节奏处理，然后走礼貌挂机流程（需报备TL审批，TL审批后登记至：<a href="https://docs.djicorp.com/weboffice/l/sd17qDgMfB0nA" target="_blank">https://docs.djicorp.com/weboffice/l/sd17qDgMfB0nA</a>）。<br>3. 升级客诉规范：<br>① 无风险场景尽量拦截，按照话术及方案澄清价保原则，告知有方案/无方案，不升级客诉。<br>② 如遇如下场景，可升级客诉处理（注：搜集客户姓名、电话、及客户信息升级客诉（客诉标签选择：电商-活动争议））。<br>客诉团队选择：除TP和维音客诉升级到LM消费客诉团队，其余团队接到客诉问题升级到自己所在团队的客诉。</div></div><!-- 图片占位：门店类型一 --><div style=\"margin:1px 0;\"> <img src=\"https://terra-1-g.djicdn.com/eb222cbc4f4345e3a134199bab1f0894/133e3d7877f049769d11309b0ed71664.png\" alt=\"门店类型一图片\" style=\"max-width:100%;height:auto;\"</div>
-<div style="margin-top:8px;color:#E67E22;font-weight:700;">【处理思路】</div>
-<div style="color:#6B7280;">请客户联系门店协商处理，并登记在表格中：<a href="https://docs.djicorp.com/weboffice/l/ckJUyBPOSNn4" target="_blank">https://docs.djicorp.com/weboffice/l/ckJUyBPOSNn4</a></div>
-<div style="margin-top:8px;color:#E67E22;font-weight:700;">【搜集信息模板】</div>
-<div style="color:#6B7280;">【购买门店】：省市+门店具体名称<br>【购买产品型号】：<br>【产品SN】：<br>【姓名】：<br>【联系方式】：电话<br>【购买凭证】：</div>
-<div style="margin-top:8px;color:#E67E22;font-weight:700;">【参考话术】</div>
-<div style="color:#6B7280;"><span style='color:red;font-weight:bold;'>第一次沟通--5分钟预警话术：</span><br>XX先生/女士，抱歉给你带来不好的体验，我们推出这次双十一活动以及预告也是为了更好回馈喜欢大疆产品的消费者，这次降价因为时间上排布让您有不好的体验，真的很对不起。公司也是在第一时间重视消费者的反馈，请给我们一些处理时间。<br>同时看到您是在线下购买的产品，不同地区的线下授权门店在活动方案上（价保、优惠等）和线上官方店铺会有一些差异，还是得麻烦您和门店进行沟通。</div>
-<div style="color:#6B7280;"><span style='color:red;font-weight:bold;'>第二次主导沟通--10分钟再次强调价保话术：</span><br>您可以先联系授权门店，门店的最新方案会由店里的工作人员结合实际情况来和您沟通。我们也是希望您咨询的问题能得到尽快处理，所以建议您和门店直接联系，这样能尽量节省您的时间。</div>
-<div style="color:#6B7280;"><span style='color:red;font-weight:bold;'>第三次礼貌挂机--15分钟礼貌挂机：授权门店（除山姆门店）：</span><br>明白您的诉求，作为消费者我也非常理解您此刻的感受，我会帮您详细记录并及时转达给门店，确保门店能了解情况并和您沟通，您这边请保持电话畅通，耐心等待下工作人员和您联系，也特别感谢您的耐心和理解，祝您生活愉快，再见。</div>
-<div style="color:#6B7280;"><span style='color:red;font-weight:bold;'>第三次礼貌挂机--15分钟礼貌挂机：授权门店（山姆门店）：</span><br>明白您的诉求了，为保障山姆真实零售会员的权益，非常抱歉我们无法将您的私人信息及诉求转达给门店。请您直接到山姆门店咨询品牌促销员及电器区域人员。感谢您的耐心和理解，祝您生活愉快，再见。</div>
-`,
-},
-
-
-"线下非授权门店": {
-  "10月2日--10月8日": `
-<div style="color:#2563EB;font-weight:700;">线下授权门店查询链接：
-  <a href="https://docs.djicorp.com/weboffice/l/cctn2shsl" target="_blank">
-    https://docs.djicorp.com/weboffice/l/cctn2shsl
-  </a>（可下载本地查询）
-</div>
-
-<div style="margin-top:6px;color:#E67E22;font-weight:700;">注意：</div>
-<div style="color:#E67E22;">若表格查询不到，不确定是否是授权门店，可先升级TL发在GT群【CC一线&区域经理沟通】，请区域经理核实。</div>
-
-<div style="margin-top:8px;color:#E67E22;font-weight:700;">【处理原则】</div>
-<div style="color:#6B7280;">
-  1. 价保专线需直接处理闭环价保问题。<br>
-  2. 如遇到明确表示恶意霸线场景（霸线≥15分钟），按如下思路和沟通节奏处理，然后走礼貌挂机流程（需报备TL审批，TL审批后登记至：
-  <a href="https://docs.djicorp.com/weboffice/l/sd17qDgMfB0nA" target="_blank">https://docs.djicorp.com/weboffice/l/sd17qDgMfB0nA</a>）。<br>
-  3. 升级客诉规范：<br>
-  ① 无风险场景尽量拦截，按照话术及方案澄清价保原则，告知有方案/无方案，不升级客诉。<br>
-  ② 如遇如下场景，可升级客诉处理（注：搜集客户姓名、电话、及客户信息升级客诉（客诉标签选择：电商-活动争议））。<br>
-  客诉团队选择：除TP和维音客诉升级到LM消费客诉团队，其余团队接到客诉问题升级到自己所在团队的客诉。
-</div>
-</div><!-- 图片占位：门店类型一 --><div style=\"margin:1px 0;\"> <img src=\"https://terra-1-g.djicdn.com/eb222cbc4f4345e3a134199bab1f0894/133e3d7877f049769d11309b0ed71664.png\" alt=\"门店类型一图片\" style=\"max-width:100%;height:auto;\"</div>
-<div style="margin-top:8px;color:#E67E22;font-weight:700;">【处理思路】</div>
-<div style="color:#6B7280;">线下非授权建议客户联系购买渠道，若客户要求DJI处理，正常拒绝客户，可参考以下流程。</div>
-
-<div style="margin-top:8px;color:#E67E22;font-weight:700;">【参考话术】</div>
-<div style="color:#6B7280;">
-  <span style="color:red;font-weight:bold;">第一次沟通--5分钟预警话术：</span><br>
-  您好，查询到您的产品不是从官方渠道购买，为了确保您能享受到最佳的售后服务和保障，我们建议您先联系购买店铺进行咨询和处理。感谢您的理解。<br><br>
-  <span style="color:red;font-weight:bold;">第二次主导沟通--10分钟再次强调价保话术：</span><br>
-  我非常理解您的心情，但由于不同渠道的活动政策可能会有所差异，我们无法直接为您提供价保服务。还请您联系购买店铺进行协商处理。<br><br>
-  <span style="color:red;font-weight:bold;">第三次礼貌挂机--15分钟礼貌挂机：</span><br>
-  明白您的诉求，我们也非常希望能协助您。但非官方渠道购买的产品，我们确实无法为您处理价保需求。还是麻烦您和门店直接联系，这样能尽量节省您的时间，您的诉求也能得到尽快处理。如果您后续还有其他问题，欢迎您随时联系我们。先不打扰您了，祝您生活愉快，再见。
-</div>
-`,
-
-  "9月9日--10月1日": `
-<div style="color:#2563EB;font-weight:700;">线下授权门店查询链接：
-  <a href="https://docs.djicorp.com/weboffice/l/cctn2shsl" target="_blank">
-    https://docs.djicorp.com/weboffice/l/cctn2shsl
-  </a>（可下载本地查询）
-</div>
-
-<div style="margin-top:6px;color:#E67E22;font-weight:700;">注意：</div>
-<div style="color:#E67E22;">若表格查询不到，不确定是否是授权门店，可先升级TL发在GT群【CC一线&区域经理沟通】，请区域经理核实。</div>
-
-<div style="margin-top:8px;color:#E67E22;font-weight:700;">【处理原则】</div>
-<div style="color:#6B7280;">
-  1. 价保专线需直接处理闭环价保问题。<br>
-  2. 如遇到明确表示恶意霸线场景（霸线≥15分钟），按如下思路和沟通节奏处理，然后走礼貌挂机流程（需报备TL审批，TL审批后登记至：
-  <a href="https://docs.djicorp.com/weboffice/l/sd17qDgMfB0nA" target="_blank">https://docs.djicorp.com/weboffice/l/sd17qDgMfB0nA</a>）。<br>
-  3. 升级客诉规范：<br>
-  ① 无风险场景尽量拦截，按照话术及方案澄清价保原则，告知有方案/无方案，不升级客诉。<br>
-  ② 如遇如下场景，可升级客诉处理（注：搜集客户姓名、电话、及客户信息升级客诉（客诉标签选择：电商-活动争议））。<br>
-  客诉团队选择：除TP和维音客诉升级到LM消费客诉团队，其余团队接到客诉问题升级到自己所在团队的客诉。
-</div>
-</div><!-- 图片占位：门店类型一 --><div style=\"margin:1px 0;\"> <img src=\"https://terra-1-g.djicdn.com/eb222cbc4f4345e3a134199bab1f0894/133e3d7877f049769d11309b0ed71664.png\" alt=\"门店类型一图片\" style=\"max-width:100%;height:auto;\"</div>
-<div style="margin-top:8px;color:#E67E22;font-weight:700;">【处理思路】</div>
-<div style="color:#6B7280;">线下非授权建议客户联系购买渠道，若客户要求DJI处理，正常拒绝客户，可参考以下流程。</div>
-
-<div style="margin-top:8px;color:#E67E22;font-weight:700;">【参考话术】</div>
-<div style="color:#6B7280;">
-  <span style="color:red;font-weight:bold;">第一次沟通--5分钟预警话术：</span><br>
-  您好，查询到您的产品不是从官方渠道购买，为了确保您能享受到最佳的售后服务和保障，我们建议您先联系购买店铺进行咨询和处理。感谢您的理解。<br><br>
-  <span style="color:red;font-weight:bold;">第二次主导沟通--10分钟再次强调价保话术：</span><br>
-  我非常理解您的心情，但由于不同渠道的活动政策可能会有所差异，我们无法直接为您提供价保服务。还请您联系购买店铺进行协商处理。<br><br>
-  <span style="color:red;font-weight:bold;">第三次礼貌挂机--15分钟礼貌挂机：</span><br>
-  明白您的诉求，我们也非常希望能协助您。但非官方渠道购买的产品，我们确实无法为您处理价保需求。还是麻烦您和门店直接联系，这样能尽量节省您的时间，您的诉求也能得到尽快处理。如果您后续还有其他问题，欢迎您随时联系我们。先不打扰您了，祝您生活愉快，再见。
-</div>
-`,
-
-  "9月9日之前": `
-<div style="color:#2563EB;font-weight:700;">线下授权门店查询链接：
-  <a href="https://docs.djicorp.com/weboffice/l/cctn2shsl" target="_blank">
-    https://docs.djicorp.com/weboffice/l/cctn2shsl
-  </a>（可下载本地查询）
-</div>
-
-<div style="margin-top:6px;color:#E67E22;font-weight:700;">注意：</div>
-<div style="color:#E67E22;">若表格查询不到，不确定是否是授权门店，可先升级TL发在GT群【CC一线&区域经理沟通】，请区域经理核实。</div>
-
-<div style="margin-top:8px;color:#E67E22;font-weight:700;">【处理原则】</div>
-<div style="color:#6B7280;">
-  1. 价保专线需直接处理闭环价保问题。<br>
-  2. 如遇到明确表示恶意霸线场景（霸线≥15分钟），按如下思路和沟通节奏处理，然后走礼貌挂机流程（需报备TL审批，TL审批后登记至：
-  <a href="https://docs.djicorp.com/weboffice/l/sd17qDgMfB0nA" target="_blank">https://docs.djicorp.com/weboffice/l/sd17qDgMfB0nA</a>）。<br>
-  3. 升级客诉规范：<br>
-  ① 无风险场景尽量拦截，按照话术及方案澄清价保原则，告知有方案/无方案，不升级客诉。<br>
-  ② 如遇如下场景，可升级客诉处理（注：搜集客户姓名、电话、及客户信息升级客诉（客诉标签选择：电商-活动争议））。<br>
-  客诉团队选择：除TP和维音客诉升级到LM消费客诉团队，其余团队接到客诉问题升级到自己所在团队的客诉。
-</div>
-</div><!-- 图片占位：门店类型一 --><div style=\"margin:1px 0;\"> <img src=\"https://terra-1-g.djicdn.com/eb222cbc4f4345e3a134199bab1f0894/133e3d7877f049769d11309b0ed71664.png\" alt=\"门店类型一图片\" style=\"max-width:100%;height:auto;\"</div>
-<div style="margin-top:8px;color:#E67E22;font-weight:700;">【处理思路】</div>
-<div style="color:#6B7280;">线下非授权建议客户联系购买渠道，若客户要求DJI处理，正常拒绝客户，可参考以下流程。</div>
-
-<div style="margin-top:8px;color:#E67E22;font-weight:700;">【参考话术】</div>
-<div style="color:#6B7280;">
-  <span style="color:red;font-weight:bold;">第一次沟通--5分钟预警话术：</span><br>
-  您好，查询到您的产品不是从官方渠道购买，为了确保您能享受到最佳的售后服务和保障，我们建议您先联系购买店铺进行咨询和处理。感谢您的理解。<br><br>
-  <span style="color:red;font-weight:bold;">第二次主导沟通--10分钟再次强调价保话术：</span><br>
-  我非常理解您的心情，但由于不同渠道的活动政策可能会有所差异，我们无法直接为您提供价保服务。还请您联系购买店铺进行协商处理。<br><br>
-  <span style="color:red;font-weight:bold;">第三次礼貌挂机--15分钟礼貌挂机：</span><br>
-  明白您的诉求，我们也非常希望能协助您。但非官方渠道购买的产品，我们确实无法为您处理价保需求。还是麻烦您和门店直接联系，这样能尽量节省您的时间，您的诉求也能得到尽快处理。如果您后续还有其他问题，欢迎您随时联系我们。先不打扰您了，祝您生活愉快，再见。
-</div>
-`
-}
-},
-"其他产品": {
-    "线下授权门店": {
-"10月2日--10月8日": `
-<div style="color:#E67E22;font-weight:700;">目前线下价保机型只有 Osmo Pocket 3、Osmo 360、Osmo Action 5 Pro。</div>
-<div style="color:#E67E22;">若客户不是价保机型，但有争议，请先话术解释并搜集信息，同步登记在文档中：</div>
-<div style="color:#2563EB;"><a href="https://docs.djicorp.com/weboffice/l/ckJUyBPOSNn4" target="_blank">https://docs.djicorp.com/weboffice/l/ckJUyBPOSNn4</a></div>
-
-<div style="margin-top:8px;color:#E67E22;font-weight:700;">【搜集信息模板】</div>
-<div style="color:#6B7280;">【购买门店】：省市+门店具体名称</div>
-<div style="color:#6B7280;">【购买产品型号】：</div>
-<div style="color:#6B7280;">【产品SN】：</div>
-<div style="color:#6B7280;">【姓名】：</div>
-<div style="color:#6B7280;">【联系方式】：电话</div>
-<div style="color:#6B7280;">【购买凭证】：</div>
-
-<div style="color:#E67E22;">已登记在云表客户催进度、吐槽无人联系、威胁社媒或投诉或曝光，在表格中标记 "加急"。同时升级TL发在GT群【CC一线&区域经理沟通】，请区域经理核实。</div>
-
-<div style="margin-top:8px;color:#6B7280;font-weight:700;">【后续处理】</div>
-<div style="color:#6B7280;">① 若用户不接受反馈，或者反馈方案无效，升级客诉处理（客诉标签选择：市场-营销活动争议。价保问题升级给 LM 消费客诉）。</div>
-<div style="color:#6B7280;">② 若已有客诉案例，参考现有催办流程处理：<a href='https://wing.djicorp.com/user/knowledge/zh/2/00201004261' target='_blank'>催办流程</a></div>
-`,
-
-
-"9月9日--10月1日":  `
-<div style="color:#E67E22;font-weight:700;">目前线下价保机型只有 Osmo Pocket 3、Osmo 360、Osmo Action 5 Pro。</div>
-<div style="color:#E67E22;">若客户不是价保机型，但有争议，请先话术解释并搜集信息，同步登记在文档中：</div>
-<div style="color:#2563EB;"><a href="https://docs.djicorp.com/weboffice/l/ckJUyBPOSNn4" target="_blank">https://docs.djicorp.com/weboffice/l/ckJUyBPOSNn4</a></div>
-
-<div style="margin-top:8px;color:#E67E22;font-weight:700;">【搜集信息模板】</div>
-<div style="color:#6B7280;">【购买门店】：省市+门店具体名称</div>
-<div style="color:#6B7280;">【购买产品型号】：</div>
-<div style="color:#6B7280;">【产品SN】：</div>
-<div style="color:#6B7280;">【姓名】：</div>
-<div style="color:#6B7280;">【联系方式】：电话</div>
-<div style="color:#6B7280;">【购买凭证】：</div>
-
-<div style="color:#E67E22;">已登记在云表客户催进度、吐槽无人联系、威胁社媒或投诉或曝光，在表格中标记 "加急"。同时升级TL发在GT群【CC一线&区域经理沟通】，请区域经理核实。</div>
-
-<div style="margin-top:8px;color:#6B7280;font-weight:700;">【后续处理】</div>
-<div style="color:#6B7280;">① 若用户不接受反馈，或者反馈方案无效，升级客诉处理（客诉标签选择：市场-营销活动争议。价保问题升级给 LM 消费客诉）。</div>
-<div style="color:#6B7280;">② 若已有客诉案例，参考现有催办流程处理：<a href='https://wing.djicorp.com/user/knowledge/zh/2/00201004261' target='_blank'>催办流程</a></div>
-`,
-
-
-
-"9月9日之前":  `
-<div style="color:#E67E22;font-weight:700;">目前线下价保机型只有 Osmo Pocket 3、Osmo 360、Osmo Action 5 Pro。</div>
-<div style="color:#E67E22;">若客户不是价保机型，但有争议，请先话术解释并搜集信息，同步登记在文档中：</div>
-<div style="color:#2563EB;"><a href="https://docs.djicorp.com/weboffice/l/ckJUyBPOSNn4" target="_blank">https://docs.djicorp.com/weboffice/l/ckJUyBPOSNn4</a></div>
-
-<div style="margin-top:8px;color:#E67E22;font-weight:700;">【搜集信息模板】</div>
-<div style="color:#6B7280;">【购买门店】：省市+门店具体名称</div>
-<div style="color:#6B7280;">【购买产品型号】：</div>
-<div style="color:#6B7280;">【产品SN】：</div>
-<div style="color:#6B7280;">【姓名】：</div>
-<div style="color:#6B7280;">【联系方式】：电话</div>
-<div style="color:#6B7280;">【购买凭证】：</div>
-
-<div style="color:#E67E22;">已登记在云表客户催进度、吐槽无人联系、威胁社媒或投诉或曝光，在表格中标记 "加急"。同时升级TL发在GT群【CC一线&区域经理沟通】，请区域经理核实。</div>
-
-<div style="margin-top:8px;color:#6B7280;font-weight:700;">【后续处理】</div>
-<div style="color:#6B7280;">① 若用户不接受反馈，或者反馈方案无效，升级客诉处理（客诉标签选择：市场-营销活动争议。价保问题升级给 LM 消费客诉）。</div>
-<div style="color:#6B7280;">② 若已有客诉案例，参考现有催办流程处理：<a href='https://wing.djicorp.com/user/knowledge/zh/2/00201004261' target='_blank'>催办流程</a></div>
-`,
-    },
-
-"线下非授权门店": {
-  "10月2日--10月8日": `
-<div style="color:#2563EB;font-weight:700;">线下授权门店查询链接：
-  <a href="https://docs.djicorp.com/weboffice/l/cctn2shsl" target="_blank">
-    https://docs.djicorp.com/weboffice/l/cctn2shsl
-  </a>（可下载本地查询）
-</div>
-
-<div style="margin-top:6px;color:#E67E22;font-weight:700;">注意：</div>
-<div style="color:#E67E22;">若表格查询不到，不确定是否是授权门店，可先升级TL发在GT群【CC一线&区域经理沟通】，请区域经理核实。</div>
-
-<div style="margin-top:8px;color:#E67E22;font-weight:700;">【处理原则】</div>
-<div style="color:#6B7280;">
-  1. 价保专线需直接处理闭环价保问题。<br>
-  2. 如遇到明确表示恶意霸线场景（霸线≥15分钟），按如下思路和沟通节奏处理，然后走礼貌挂机流程（需报备TL审批，TL审批后登记至：
-  <a href="https://docs.djicorp.com/weboffice/l/sd17qDgMfB0nA" target="_blank">https://docs.djicorp.com/weboffice/l/sd17qDgMfB0nA</a>）。<br>
-  3. 升级客诉规范：<br>
-  ① 无风险场景尽量拦截，按照话术及方案澄清价保原则，告知有方案/无方案，不升级客诉。<br>
-  ② 如遇如下场景，可升级客诉处理（注：搜集客户姓名、电话、及客户信息升级客诉（客诉标签选择：电商-活动争议））。<br>
-  客诉团队选择：除TP和维音客诉升级到LM消费客诉团队，其余团队接到客诉问题升级到自己所在团队的客诉。
-</div>
-</div><!-- 图片占位：门店类型一 --><div style=\"margin:1px 0;\"> <img src=\"https://terra-1-g.djicdn.com/eb222cbc4f4345e3a134199bab1f0894/133e3d7877f049769d11309b0ed71664.png\" alt=\"门店类型一图片\" style=\"max-width:100%;height:auto;\"</div>
-<div style="margin-top:8px;color:#E67E22;font-weight:700;">【处理思路】</div>
-<div style="color:#6B7280;">线下非授权建议客户联系购买渠道，若客户要求DJI处理，正常拒绝客户，可参考以下流程。</div>
-
-<div style="margin-top:8px;color:#E67E22;font-weight:700;">【参考话术】</div>
-<div style="color:#6B7280;">
-  <span style="color:red;font-weight:bold;">第一次沟通--5分钟预警话术：</span><br>
-  您好，查询到您的产品不是从官方渠道购买，为了确保您能享受到最佳的售后服务和保障，我们建议您先联系购买店铺进行咨询和处理。感谢您的理解。<br><br>
-  <span style="color:red;font-weight:bold;">第二次主导沟通--10分钟再次强调价保话术：</span><br>
-  我非常理解您的心情，但由于不同渠道的活动政策可能会有所差异，我们无法直接为您提供价保服务。还请您联系购买店铺进行协商处理。<br><br>
-  <span style="color:red;font-weight:bold;">第三次礼貌挂机--15分钟礼貌挂机：</span><br>
-  明白您的诉求，我们也非常希望能协助您。但非官方渠道购买的产品，我们确实无法为您处理价保需求。还是麻烦您和门店直接联系，这样能尽量节省您的时间，您的诉求也能得到尽快处理。如果您后续还有其他问题，欢迎您随时联系我们。先不打扰您了，祝您生活愉快，再见。
-</div>
-`,
-
-  "9月9日--10月1日": `
-<div style="color:#2563EB;font-weight:700;">线下授权门店查询链接：
-  <a href="https://docs.djicorp.com/weboffice/l/cctn2shsl" target="_blank">
-    https://docs.djicorp.com/weboffice/l/cctn2shsl
-  </a>（可下载本地查询）
-</div>
-
-<div style="margin-top:6px;color:#E67E22;font-weight:700;">注意：</div>
-<div style="color:#E67E22;">若表格查询不到，不确定是否是授权门店，可先升级TL发在GT群【CC一线&区域经理沟通】，请区域经理核实。</div>
-
-<div style="margin-top:8px;color:#E67E22;font-weight:700;">【处理原则】</div>
-<div style="color:#6B7280;">
-  1. 价保专线需直接处理闭环价保问题。<br>
-  2. 如遇到明确表示恶意霸线场景（霸线≥15分钟），按如下思路和沟通节奏处理，然后走礼貌挂机流程（需报备TL审批，TL审批后登记至：
-  <a href="https://docs.djicorp.com/weboffice/l/sd17qDgMfB0nA" target="_blank">https://docs.djicorp.com/weboffice/l/sd17qDgMfB0nA</a>）。<br>
-  3. 升级客诉规范：<br>
-  ① 无风险场景尽量拦截，按照话术及方案澄清价保原则，告知有方案/无方案，不升级客诉。<br>
-  ② 如遇如下场景，可升级客诉处理（注：搜集客户姓名、电话、及客户信息升级客诉（客诉标签选择：电商-活动争议））。<br>
-  客诉团队选择：除TP和维音客诉升级到LM消费客诉团队，其余团队接到客诉问题升级到自己所在团队的客诉。
-</div>
-</div><!-- 图片占位：门店类型一 --><div style=\"margin:1px 0;\"> <img src=\"https://terra-1-g.djicdn.com/eb222cbc4f4345e3a134199bab1f0894/133e3d7877f049769d11309b0ed71664.png\" alt=\"门店类型一图片\" style=\"max-width:100%;height:auto;\"</div>
-<div style="margin-top:8px;color:#E67E22;font-weight:700;">【处理思路】</div>
-<div style="color:#6B7280;">线下非授权建议客户联系购买渠道，若客户要求DJI处理，正常拒绝客户，可参考以下流程。</div>
-
-<div style="margin-top:8px;color:#E67E22;font-weight:700;">【参考话术】</div>
-<div style="color:#6B7280;">
-  <span style="color:red;font-weight:bold;">第一次沟通--5分钟预警话术：</span><br>
-  您好，查询到您的产品不是从官方渠道购买，为了确保您能享受到最佳的售后服务和保障，我们建议您先联系购买店铺进行咨询和处理。感谢您的理解。<br><br>
-  <span style="color:red;font-weight:bold;">第二次主导沟通--10分钟再次强调价保话术：</span><br>
-  我非常理解您的心情，但由于不同渠道的活动政策可能会有所差异，我们无法直接为您提供价保服务。还请您联系购买店铺进行协商处理。<br><br>
-  <span style="color:red;font-weight:bold;">第三次礼貌挂机--15分钟礼貌挂机：</span><br>
-  明白您的诉求，我们也非常希望能协助您。但非官方渠道购买的产品，我们确实无法为您处理价保需求。还是麻烦您和门店直接联系，这样能尽量节省您的时间，您的诉求也能得到尽快处理。如果您后续还有其他问题，欢迎您随时联系我们。先不打扰您了，祝您生活愉快，再见。
-</div>
-`,
-
-  "9月9日之前": `
-<div style="color:#2563EB;font-weight:700;">线下授权门店查询链接：
-  <a href="https://docs.djicorp.com/weboffice/l/cctn2shsl" target="_blank">
-    https://docs.djicorp.com/weboffice/l/cctn2shsl
-  </a>（可下载本地查询）
-</div>
-
-<div style="margin-top:6px;color:#E67E22;font-weight:700;">注意：</div>
-<div style="color:#E67E22;">若表格查询不到，不确定是否是授权门店，可先升级TL发在GT群【CC一线&区域经理沟通】，请区域经理核实。</div>
-
-<div style="margin-top:8px;color:#E67E22;font-weight:700;">【处理原则】</div>
-<div style="color:#6B7280;">
-  1. 价保专线需直接处理闭环价保问题。<br>
-  2. 如遇到明确表示恶意霸线场景（霸线≥15分钟），按如下思路和沟通节奏处理，然后走礼貌挂机流程（需报备TL审批，TL审批后登记至：
-  <a href="https://docs.djicorp.com/weboffice/l/sd17qDgMfB0nA" target="_blank">https://docs.djicorp.com/weboffice/l/sd17qDgMfB0nA</a>）。<br>
-  3. 升级客诉规范：<br>
-  ① 无风险场景尽量拦截，按照话术及方案澄清价保原则，告知有方案/无方案，不升级客诉。<br>
-  ② 如遇如下场景，可升级客诉处理（注：搜集客户姓名、电话、及客户信息升级客诉（客诉标签选择：电商-活动争议））。<br>
-  客诉团队选择：除TP和维音客诉升级到LM消费客诉团队，其余团队接到客诉问题升级到自己所在团队的客诉。
-</div>
-</div><!-- 图片占位：门店类型一 --><div style=\"margin:1px 0;\"> <img src=\"https://terra-1-g.djicdn.com/eb222cbc4f4345e3a134199bab1f0894/133e3d7877f049769d11309b0ed71664.png\" alt=\"门店类型一图片\" style=\"max-width:100%;height:auto;\"</div>
-<div style="margin-top:8px;color:#E67E22;font-weight:700;">【处理思路】</div>
-<div style="color:#6B7280;">线下非授权建议客户联系购买渠道，若客户要求DJI处理，正常拒绝客户，可参考以下流程。</div>
-
-<div style="margin-top:8px;color:#E67E22;font-weight:700;">【参考话术】</div>
-<div style="color:#6B7280;">
-  <span style="color:red;font-weight:bold;">第一次沟通--5分钟预警话术：</span><br>
-  您好，查询到您的产品不是从官方渠道购买，为了确保您能享受到最佳的售后服务和保障，我们建议您先联系购买店铺进行咨询和处理。感谢您的理解。<br><br>
-  <span style="color:red;font-weight:bold;">第二次主导沟通--10分钟再次强调价保话术：</span><br>
-  我非常理解您的心情，但由于不同渠道的活动政策可能会有所差异，我们无法直接为您提供价保服务。还请您联系购买店铺进行协商处理。<br><br>
-  <span style="color:red;font-weight:bold;">第三次礼貌挂机--15分钟礼貌挂机：</span><br>
-  明白您的诉求，我们也非常希望能协助您。但非官方渠道购买的产品，我们确实无法为您处理价保需求。还是麻烦您和门店直接联系，这样能尽量节省您的时间，您的诉求也能得到尽快处理。如果您后续还有其他问题，欢迎您随时联系我们。先不打扰您了，祝您生活愉快，再见。
-</div>
-`
-
-
-
-
-
-}
-  }
-}
-// 初始化产品框
-function updateProductOptions(list){
-    const sel=document.getElementById('product');
-    sel.innerHTML='<option value="">请选择</option>';
-    list.forEach(p=>{
-        const opt=document.createElement('option');
-        opt.value=p.value;opt.textContent=p.label;
-        sel.appendChild(opt);
-    });
-}
-
-// 更新线下购买渠道下拉框
-function updateOfflineChannelOptions(product) {
-    const channelSelect = document.getElementById('offlineChannel');
-    channelSelect.innerHTML = '<option value="">请选择</option>'; // 清空原来的选项
-    if (offlineChannelOptions[product]) {
-        offlineChannelOptions[product].forEach(ch => {
-            const opt = document.createElement('option');
-            opt.value = ch.value;
-            opt.textContent = ch.label;
-            channelSelect.appendChild(opt);
-        });
+        alert("该平台此版本暂无价格，请手动输入！");
     }
 }
 
-document.getElementById('product').addEventListener('change', function(){
-  if (document.getElementById('onlineChannel').value === '官网商城-翻新机') {
-    const productVal = this.value;
-    const versionSel = document.getElementById('version');
-    versionSel.innerHTML = '<option value="">请选择</option>';
-    (refurbVersions[productVal] || []).forEach(v => {
-      const opt = document.createElement('option');
-      opt.value = v.value;
-      opt.textContent = v.label;
-      versionSel.appendChild(opt);
-    });
-    // 根据当前支付区间联动申请区间
-    const payRangeVal = document.getElementById('refurbPayRange').value;
-    updateRefurbApplyRanges(productVal, payRangeVal);
-  } else if (currentChannel === '线下') {
-    updateOfflineChannelOptions(this.value);
-  }
-});
-
-
-document.getElementById('refurbPayRange').addEventListener('change', function(){
-  if (document.getElementById('onlineChannel').value === '官网商城-翻新机') {
-    const productVal = document.getElementById('product').value;
-    updateRefurbApplyRanges(productVal, this.value);
-  }
-});
-
-
-
-// 切换时重置结果显示
-document.getElementById('output').style.display = 'none';
-document.getElementById('output').innerHTML = '';
-
-
-
-function getQueryParam(name) {
-    const urlParams = new URLSearchParams(window.location.search);
-    return urlParams.get(name);
+function switchPlatform(el, platform) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  currentPlatform = platform;
+  document.getElementById('platformTitle').textContent = `当前平台：${platform}`;
+  document.getElementById('result').style.display = 'none';
+  document.getElementById('moreFields').style.display = 'none';
 }
 
-window.addEventListener('DOMContentLoaded', () => {
-    const payTime = getQueryParam('payTime');
-    const applyTime = getQueryParam('applyTime');
-    if (payTime) {
-        document.getElementById('payDate').value = payTime; // 子页面支付时间输入框ID
-    }
-    if (applyTime) {
-        document.getElementById('applyDate').value = applyTime; // 子页面申请价保时间输入框ID
-    }
-});
+function checkEligibility(){
+  const orderTimeVal = document.getElementById('orderTime').value;
+  const applyTimeVal = document.getElementById('applyTime').value;
+  const resultBox = document.getElementById('result');
 
-
-function setChannel(channel) {
-  const outputBox = document.getElementById('output');
-  outputBox.innerHTML = '';
-  outputBox.style.display = 'none';
-  currentChannel = channel;
-
-  document.getElementById('btnOnline').classList.toggle('active', channel === '线上');
-  document.getElementById('btnOffline').classList.toggle('active', channel === '线下');
-  document.getElementById('btnSpecial').classList.toggle('active', channel === '特殊场景');
-  document.getElementById('btnL2').classList.toggle('active', channel === '客诉L2外呼');
-
-  // 统一先隐藏所有模块
-  document.getElementById('onlineChannelBox').style.display = 'none';
-  document.getElementById('offlineChannelBox').style.display = 'none';
-  document.getElementById('offlineDateRangeBox').style.display = 'none';
-  document.getElementById('productBox').style.display = 'none';
-  document.getElementById('payDateBox').style.display = 'none';
-  document.getElementById('applyDateBox').style.display = 'none';
-  document.getElementById('versionBox').style.display = 'none';
-  document.getElementById('refurbPayRangeBox').style.display = 'none';
-  document.getElementById('refurbApplyRangeBox').style.display = 'none';
-  document.getElementById('specialBox').style.display = 'none';
-  document.getElementById('l2Box').style.display = 'none'; // 确保默认隐藏
-
-  if (channel === "线上") {
-      document.getElementById('onlineChannelBox').style.display = 'block';
-  } else if (channel === "线下") {
-      document.getElementById('productBox').style.display = 'block';
-      document.getElementById('offlineChannelBox').style.display = 'block';
-      document.getElementById('offlineDateRangeBox').style.display = 'block';
-      updateProductOptions(offlineProducts);
-const productVal = document.getElementById('product').value;
-    updateOfflineChannelOptions(productVal);
-
-
-  } else if (channel === "特殊场景") {
-      document.getElementById('specialBox').style.display = 'block';
-  } else if (channel === "客诉L2外呼") {
-      document.getElementById('l2Box').style.display = 'block'; // 只在客诉L2外呼显示
-  }
-}
-document.getElementById('onlineChannel').addEventListener('change', function(){
-  const outputBox = document.getElementById('output');
-  outputBox.innerHTML = '';
-  outputBox.style.display = 'none';
-
-  const channelVal = this.value;
-
-  if (channelVal === '官方渠道') {
-    updateProductOptions(onlineProducts);
-    document.getElementById('productBox').style.display='block';
-    document.getElementById('payDateBox').style.display='block';
-    document.getElementById('applyDateBox').style.display='block';
-    // 翻新机控件隐藏
-    document.getElementById('versionBox').style.display='none';
-    document.getElementById('refurbPayRangeBox').style.display='none';
-    document.getElementById('refurbApplyRangeBox').style.display='none';
+  if (!orderTimeVal || !applyTimeVal) {
+    resultBox.style.display = 'block';
+    resultBox.className = 'result error';
+    resultBox.innerHTML = `⚠️ 请选择支付日期和申请日期`;
+    document.getElementById('moreFields').style.display = 'none';
     return;
   }
-
-  if (channelVal === '官网商城-翻新机') {
-    // 加载翻新机产品&版本，下拉区间
-    updateProductOptions(refurbProducts);
-    document.getElementById('productBox').style.display='block';
-    document.getElementById('versionBox').style.display='block';
-    // 日期选择器隐藏，翻新机区间选择显示
-    document.getElementById('payDateBox').style.display='none';
-    document.getElementById('applyDateBox').style.display='none';
-    document.getElementById('refurbPayRangeBox').style.display='block';
-    document.getElementById('refurbApplyRangeBox').style.display='block';
+  const orderDate = new Date(orderTimeVal);
+  const applyDate = new Date(applyTimeVal);
+  if (applyDate < orderDate) {
+    resultBox.style.display = 'block';
+    resultBox.className = 'result error';
+    resultBox.innerHTML = `⚠️ 申请日期不能早于下单日期`;
+    document.getElementById('moreFields').style.display = 'none';
     return;
   }
+  const diffDays = (applyDate - orderDate) / (1000 * 60 * 60 * 24);
+if (diffDays > 7) {
+    // 拼接带参数的 iframe URL
+    const iframeUrl = `https://whimsical-kashata-e40ee8.netlify.app/?payTime=${encodeURIComponent(orderTimeVal)}&applyTime=${encodeURIComponent(applyTimeVal)}`;
 
-  // 其他线上渠道（授权/非授权）：不需要产品/日期/翻新机控件
-  document.getElementById('productBox').style.display = 'none';
-  document.getElementById('payDateBox').style.display='none';
-  document.getElementById('applyDateBox').style.display='none';
-  document.getElementById('versionBox').style.display='none';
-  document.getElementById('refurbPayRangeBox').style.display='none';
-  document.getElementById('refurbApplyRangeBox').style.display='none';
-});
+    resultBox.style.display = 'block';
+    resultBox.className = 'result error';
+    resultBox.innerHTML = `<strong>❌ 已超过7天价保期</strong><br><br>
+可参考8-30天价保工具：<br>
+<iframe
+    src="${iframeUrl}"
+    width="100%"
+    height="800"
+    style="border: none;"
+    allowfullscreen
+    loading="lazy">
+</iframe>
 
-
-// 在线方案编码（灰度补偿）映射，按版本区分
-const refurbOnlineCodes = {
-  "OP3_STD_R": "",
-  "OP3_ALL_R": "",
-  "OA5P_STD_R": "",
-  "OA5P_CH_R":  "",
-  "OA4STD_R":   "",
-  "OA4ALL_R":   ""
-};
-
-// 只展示当前“所选产品/版本”的三段式（9/17~10/8）
-function buildRefurbSept917ToOct8HTML() {
-  const productVal = document.getElementById('product').value;
-  const versionVal = document.getElementById('version').value;
-  if (!productVal || !versionVal) {
-    alert("请先选择产品与版本！");
-    return "";
-  }
-
-  const productText = document.querySelector('#product option:checked') ? document.querySelector('#product option:checked').textContent : '';
-  const versionText = document.querySelector('#version option:checked') ? document.querySelector('#version option:checked').textContent : '';
-
-  // 找该版本的灰度补偿配置
-  const comp = refurbCompSept17ToOct8[versionVal];
-  // 在线方案编码（灰度）标签
-  const grayCode = refurbOnlineCodes[versionVal] || "";
-
-  // 第二段内容（灰度补偿）——根据版本决定现金或优惠券
-  let grayCompText = "";
-  let grayCompTalk = "";
-  if (comp) {
-    grayCompText = comp.type === 'cash'
-      ? `现金 ${comp.amount} 元`
-      : `≤${comp.amount} 元 DJI 商城优惠券`;
-    grayCompTalk = comp.type === 'cash'
-      ? refurbTalk.grayCompCash(comp.amount)
-      : refurbTalk.grayCompCoupon(comp.amount);
+订单签收时间 8-30天<br>
+1. 婉拒客户诉求<br>
+咱们店铺是提供 7 天价保服务的，自订单支付时间起 7 天内（7*24小时），因同一商品出现商家官方降价，是支持价保的。查看到您的订单购买比较久了，已经超过了店铺的价保周期，实在是抱歉。
+<br><br>
+2. 如客户不接受退货重拍，升级外呼<br>
+抱歉给您带来了不便，我会把您的情况反馈给服务专员来处理，需要您留个电话号码，咱们专员会在1-3天内主动联系您，您看可以吗？来电号码是400开头的电话，您留意接听即可哦~
+<br><br>
+3. 引导客户退货重拍<br>
+【话术参考1】咱们店铺是提供 7 天价保服务的，自订单支付时间起 7 天内（7*24小时），因同一商品出现商家官方降价，是支持价保的。查看到您的订单已经超过了店铺的价保周期，实在是抱歉。
+<br>【话术参考2】同时，同为消费者非常理解您的心情，如您产品符合店铺退货要求，建议您这边申请下退货退款，再重新以活动价购买，您看看这样可以吗？的确是麻烦您了~
+<br><br>
+订单签收时间＞30天<br>
+1. 婉拒客户诉求<br>
+咱们店铺是提供 7 天价保服务的，自订单支付时间起 7 天内（7*24小时），因同一商品出现商家官方降价，是支持价保的。查看到您的订单购买比较久了，已经超过了店铺的价保周期，实在是抱歉。
+<br><br>
+2. 由于您的订单签收时间确实也比较久了，因此无法给您申请价保呢实在抱歉，不过我会把您的情况反馈给服务专员来处理，需要您留个电话号码，咱们这边会安排专员联系您，您看可以吗？来电号码是400开头的电话，您留意接听即可哦~
+`;
+    document.getElementById('moreFields').style.display = 'none';
   } else {
-    grayCompText = "（该版本暂无灰度补偿配置）";
-    grayCompTalk = "该版本暂未配置灰度补偿，请确认版本选择或联系维护人员。";
+    resultBox.style.display = 'none';
+    document.getElementById('moreFields').style.display = 'block';
   }
-
-// 第一段：优先婉拒
-const block1 = `
-  <div style="border:1px solid #cce5ff;border-radius:8px;padding:12px;background:#f8fbff;">
-    <div style="display:flex;justify-content:space-between;align-items:center;">
-      <div style="font-weight:700;color:#0056b3;">价保方案（优先婉拒客户诉求）</div>
-    </div>
-    <div style="margin-top:8px;">
-      <b>参考话术：</b><br>${refurbTalk.refuse7days}
-
-    </div>
-  </div>
-`;
-
-  // 第二段：如客户不接受（只展示当前选择的产品/版本）
-const block2 = `
-  <div style="margin-top:12px;border:1px solid #fde68a;border-radius:8px;padding:12px;background:#fffbeb;">
-    <div style="display:flex;justify-content:space-between;align-items:center;">
-      <div style="font-weight:700;color:#b45309;">如客户不接受（灰度补偿方案）</div>
-      ${ grayCode ? `<span style="display:inline-block;font-size:12px;padding:2px 8px;border-radius:12px;border:1px solid #f59e0b;color:#b45309;background:#fff7ed;">${grayCode}</span>` : `` }
-    </div>
-    <div><b>补偿方案：</b>${grayCompText}</div>
-    <div style="margin-top:6px;"><b>参考话术：</b><br>${grayCompTalk}
-      <br><br>
-      客户接受方案在云表登记商城sheet<br>
-      登记链接：<a href="https://docs.djicorp.com/weboffice/l/somxmLGcr5irO" target="_blank">
-        https://docs.djicorp.com/weboffice/l/somxmLGcr5irO
-      </a>
-    </div>
-  </div>
-`;
-
-  // 第三段：如仍不接受灰度（退货重拍）
-  const block3 = `
-    <div style="margin-top:12px;border:1px solid #cbd5e1;border-radius:8px;padding:12px;background:#f8fafc;">
-      <div style="display:flex;justify-content:space-between;align-items:center;">
-        <div style="font-weight:700;color:#0f172a;">如客户不接受灰度补偿方案（退货重拍）</div>
-        <span style="display:inline-block;font-size:12px;padding:2px 8px;border-radius:12px;border:1px solid #94a3b8;color:#334155;background:#eef2f7;">
-        </span>
-      </div>
-      <div style="margin-top:6px;"><b>方案：</b>签收次日起 30 天内，且符合退货要求，可申请退货退款后以活动价重拍</div>
-      <div style="margin-top:6px;"><b>参考话术：</b><br>
-        同为消费者非常理解您的心情，如您产品签收时间次日起计算在 30 天内，并符合店铺退货要求，建议您这边申请下退货退款，再重新以活动价购买，您看这样可以吗？
-      </div>
-    </div>
-  `;
-
-  return block1 + block2 + block3;
 }
 
+function autoFillProductPrice() {
+    const product = document.getElementById("productSelect").value;
+    const version = document.getElementById("versionSelect").value;
+    const applyTimeVal = document.getElementById('applyTime').value;
 
-function showResult(){
-  let result = "";
-
-
-
-if (currentChannel === "客诉L2外呼") {
-    const scenario = document.getElementById('l2Scenario').value;
-    if (!scenario) { alert("请选择场景"); return; }
-    result = l2Scheme[scenario] || "暂无该场景话术";
-    document.getElementById('output').innerHTML = result;
-    document.getElementById('output').style.display = 'block';
-    return;
-}
+    if (!product || !version) return;
 
 
-  // 特殊场景：显示话术
-  if (currentChannel === "特殊场景") {
-    const scenario = document.getElementById('specialScenario').value;
-    if (!scenario) { alert("请选择场景"); return; }
-    result = specialScheme[scenario] || "暂无该场景话术";
-    document.getElementById('output').innerHTML = result;
-    document.getElementById('output').style.display = 'block';
-    return;
-  }
+    const promoStart = new Date("2025-10-09");
+    const promoEnd   = new Date("2025-11-13");
+    const applyDate  = new Date(applyTimeVal);
 
-  if (currentChannel === "线上") {
-    const onlineChannel = document.getElementById('onlineChannel').value;
-    if (!onlineChannel) { alert("请选择线上购买渠道！"); return; }
-
-    // 1) 翻新机分支（官网商城-翻新机）
-if (onlineChannel === '官网商城-翻新机') {
-  const payRange = document.getElementById('refurbPayRange').value;
-  if (!payRange) { alert("请选择支付时间区间！"); return; }
-
-  // 只处理 9/17~10/8：两段式只展示当前选择产品/版本
-  if (payRange === 'Sept17_to_Oct8') {
-    const html = buildRefurbSept917ToOct8HTML(); // 使用上面新增的函数
-    if (!html) return; // 若未选择产品/版本，函数内部已 alert
-    const out = document.getElementById('output');
-    out.innerHTML = html;
-    out.style.display = 'block';
-    return; // 防止走到其它分支
-  }
-
-  // 其它翻新机区间（10月9日后、9月16日及之前）保持你原来的逻辑
-  const product = document.getElementById('product').value;
-  const version = document.getElementById('version').value;
-  const applyRange = document.getElementById('refurbApplyRange').value;
-  if (!product || !version || !applyRange) {
-    alert("请填写完整信息（产品、版本、申请价保时间区间）！");
-    return;
-  }
-
-  let schemeLabel = "", payTime = "", protectTime = "", compText = "", talkText = "";
-
-  if (payRange === 'afterOct9') {
-    schemeLabel = "价保双11可退差";
-    payTime = "2025年10月9日 00:00 至 11月14日 23:59:59";
-    protectTime = "2025年10月9日 00:00 至 11月21日 23:59:59";
-    const amount = refurbCompAfterOct9[version];
-    compText = `现金 ${amount} 元`;
-    talkText = refurbTalk.afterOct9;
-  } else if (payRange === 'beforeSept16') {
-    schemeLabel = "婉拒；如不接受，收集信息后升级外呼";
-    payTime = "9月16日及之前的订单";
-    protectTime = "超30天无价保";
-    compText = "无";
-    talkText = refurbTalk.beforeSept16;
-  }
-
-  const resultHtml =
-    `<div><b>价保方案：</b>${schemeLabel}</div>` +
-    `<div><b>补偿方案：</b>${compText || '无'}</div>` +
-    `<div style="margin-top:8px;"><b>参考话术：</b><br>${(talkText || '').replace(/\n/g, '<br>')}</div>`;
-
-  const out = document.getElementById('output');
-  out.innerHTML = resultHtml;
-  out.style.display = 'block';
-  return;
-}
-
-    // 2) 官方渠道分支（日期选择器）
-    if (onlineChannel === '官方渠道') {
-      const product = document.getElementById('product').value;
-      const payDateStr = document.getElementById('payDate').value;
-      const applyDateStr = document.getElementById('applyDate').value;
-      if (!product || !payDateStr || !applyDateStr) { alert("请填写完整信息！"); return; }
-
-      const payDate = new Date(payDateStr);
-      const applyDate = new Date(applyDateStr);
-      if (isNaN(payDate) || isNaN(applyDate)) { alert("日期格式不正确！"); return; }
-      if (applyDate < payDate) { alert("申请时间早于支付时间"); return; }
-
-      // 10月9日活动已开启不涉及价保
-      const activityCutoff = new Date(payDate.getFullYear(), 9, 9, 0, 0, 0); // 10月索引为9
-      if (payDate >= activityCutoff) {
-        const msg = "10月9日活动已开启不涉及价保";
-        const outputBox = document.getElementById('output');
-        outputBox.innerText = msg;
-        outputBox.style.display = 'block';
+    if (!applyTimeVal || applyDate < promoStart || applyDate > promoEnd) {
+        alert("当前申请日期不在促销活动期（10月9日-11月13日），请手动输入价格！");
         return;
-      }
-
-      const diffDays = Math.ceil((applyDate - payDate) / (1000 * 60 * 60 * 24)); // 修复这里
-      const year = payDate.getFullYear();
-      const specialPayStart = new Date(year, 8, 9, 0, 0, 0);      // 9月（索引8）
-      const specialApplyEnd = new Date(year, 10, 13, 23, 59, 59); // 11月（索引10）
-
-      let timeRange;
-      if (payDate >= specialPayStart && applyDate <= specialApplyEnd) {
-        timeRange = diffDays <= 7 ? "7天内" : "8-30天";
-      } else {
-        timeRange = diffDays <= 7 ? "7天内" : (diffDays <= 30 ? "8-30天" : "30天以上");
-      }
-
-      result = onlineScheme[product]?.[timeRange] || "无匹配方案";
-
-      if (timeRange === "8-30天") {
-        result +=
-          "\n\n【现金处理说明】：\n" +
-          "京东旗舰店登记表格，会有售后同事打款到客户京东账户\n" +
-          "京东自营：优先引导客户联系京东平台客服，平台客服会直接退差，若客户不愿意联系登记表格，会在时效内打款到客户的京东账户。时效：3-5个工作日\n" +
-          "官网商城：根据支付方式原路退回\n" +
-          "天猫/抖音/拼多多/小红书/微信小店：直接引导客户在平台-我的订单内申请-仅退款-退运费，会有售后同事操作退款\n" +
-          "时效：3-5天\n\n" +
-          "【赠品处理说明】：\n" +
-          "所有渠道登记表格后,会有专员安排赠品补发\n" +
-          "时效：3-5天\n\n" +
-          "登记链接：https://docs.djicorp.com/weboffice/l/somxmLGcr5irO";
-      }
-
-      document.getElementById('output').innerHTML = result;
-      document.getElementById('output').style.display = 'block';
-      return;
     }
 
-    // 3) 线上非授权 / 线上授权 分支（保持你的原文案）
-    if (onlineChannel === "线上非授权") {
-      result = `
-建议客户联系购买渠道，若客户要求我们处理，正常拒绝客户，可参考以下流程。<br>
-<span style='color:red;font-weight:bold;'>【处理原则】</span><br>
-1. 价保专线需直接处理闭环价保问题。<br>
-2. 如遇到明确表示恶意霸线场景（霸线≥15分钟），按如下思路和沟通节奏处理，然后走礼貌挂机流程（需报备TL审批，TL审批后登记至：
-<a href='https://docs.djicorp.com/weboffice/l/sd17qDgMfB0nA' target='_blank'>https://docs.djicorp.com/weboffice/l/sd17qDgMfB0nA</a>）。<br>
-3. 升级客诉规范：<br>
-① 无风险场景尽量拦截，按照话术及方案澄清价保原则，告知有方案/无方案，不升级客诉。<br>
-② 如遇如下场景，可升级客诉处理（注：搜集客户姓名、电话、及客户信息升级客诉（客诉标签选择：电商-活动争议））。<br>
-客诉团队选择：除TP和维音客诉升级到LM消费客诉团队，其余团队接到客诉问题升级到自己所在团队的客诉。<br>
-<img src="https://terra-1-g.djicdn.com/eb222cbc4f4345e3a134199bab1f0894/133e3d7877f049769d11309b0ed71664.png" alt="门店类型一图片" style="max-width:100%;height:auto;margin:0;padding:0;">
-<span style='color:red;font-weight:bold;'>【参考话术】</span><br>
-<span style='color:red;font-weight:bold;'>第一次沟通--5分钟预警话术：</span>
-您好，查询到您的产品不是从官方渠道购买，为了确保您能享受到最佳的售后服务和保障，我们建议您先联系购买店铺进行咨询和处理。感谢您的理解。<br>
-<span style='color:red;font-weight:bold;'>第二次主导沟通--10分钟再次强调价保话术：</span>
-我非常理解您的心情，但由于不同渠道的活动政策可能会有所差异，我们无法直接为您提供价保服务。还请您联系购买店铺进行协商处理。<br>
-<span style='color:red;font-weight:bold;'>第三次礼貌挂机--15分钟礼貌挂机：</span>
-明白您的诉求，我们也非常希望能协助您。但非官方渠道购买的产品，我们确实无法为您处理价保需求。还是麻烦您和店铺直接联系，这样能尽量节省您的时间，您的诉求也能得到尽快处理。如果您后续还有其他问题，欢迎您随时联系我们。先不打扰您了，祝您生活愉快，再见。
-`;
-      document.getElementById('output').innerHTML = result;
-      document.getElementById('output').style.display = 'block';
-      return;
-    }
 
-    if (onlineChannel === "线上授权") {
-      result = `
-建议客户联系购买渠道，若客户要求我们处理，正常拒绝客户，可参考以下流程。<br>
-<span style='color:red;font-weight:bold;'>【处理原则】</span><br>
-1. 价保专线需直接处理闭环价保问题。<br>
-2. 如遇到明确表示恶意霸线场景（霸线≥15分钟），按如下思路和沟通节奏处理，然后走礼貌挂机流程（需报备TL审批，TL审批后登记至：
-<a href='https://docs.djicorp.com/weboffice/l/sd17qDgMfB0nA' target='_blank'>https://docs.djicorp.com/weboffice/l/sd17qDgMfB0nA</a>）。<br>
-3. 升级客诉规范：<br>
-① 无风险场景尽量拦截，按照话术及方案澄清价保原则，告知有方案/无方案，不升级客诉。<br>
-② 如遇如下场景，可升级客诉处理（注：搜集客户姓名、电话、及客户信息升级客诉（客诉标签选择：电商-活动争议））。<br>
-客诉团队选择：除TP和维音客诉升级到LM消费客诉团队，其余团队接到客诉问题升级到自己所在团队的客诉。<br>
-<img src="https://terra-1-g.djicdn.com/eb222cbc4f4345e3a134199bab1f0894/133e3d7877f049769d11309b0ed71664.png" alt="门店类型一图片" style="max-width:100%;height:auto;margin:0;padding:0;vertical-align:middle;">
-<span style='color:red;font-weight:bold;'>【参考话术】</span><br>
-<span style='color:red;font-weight:bold;'>第一次沟通--5分钟预警话术：</span>
-您好，查询到您的产品不是从官方渠道购买，为了确保您能享受到最佳的售后服务和保障，我们建议您先联系购买店铺进行咨询和处理。感谢您的理解。<br>
-<span style='color:red;font-weight:bold;'>第二次主导沟通--10分钟再次强调价保话术：</span>
-我非常理解您的心情，但由于不同渠道的活动政策可能会有所差异，我们无法直接为您提供价保服务。还请您联系购买店铺进行协商处理。<br>
-<span style='color:red;font-weight:bold;'>第三次礼貌挂机--15分钟礼貌挂机：</span>
-明白您的诉求，我们也非常希望能协助您。但非官方渠道购买的产品，我们确实无法为您处理价保需求。还是麻烦您和店铺直接联系，这样能尽量节省您的时间，您的诉求也能得到尽快处理。如果您后续还有其他问题，欢迎您随时联系我们。先不打扰您了，祝您生活愉快，再见。
-`;
-      document.getElementById('output').innerHTML = result;
-      document.getElementById('output').style.display = 'block';
-      return;
+    const priceMap = productPriceRules[product][version];
+    let price = priceMap[currentPlatform] ?? priceMap["All"];
+    if (price != null) {
+        document.getElementById('currentPrice').value = price;
+    } else {
+        alert("检测到该产品在此平台不涉及到降价，请复核后手动输入");
     }
-
-  } else {
-    // 线下
-    const product = document.getElementById('product').value;
-    const offlineChannel = document.getElementById('offlineChannel').value;
-    const offlineDateRange = document.getElementById('offlineDateRange').value;
-    if (!product || !offlineChannel || !offlineDateRange) { alert("请选择完整信息！"); return; }
-    result = offlineScheme[product]?.[offlineChannel]?.[offlineDateRange] || "无匹配方案";
-    document.getElementById('output').innerHTML = result;
-    document.getElementById('output').style.display = 'block';
-  }
 }
 
-setChannel('线上');
 
+function setSubsidyValue(type) {
+  let selectId = type === 'original' ? 'originalSubsidySelect' : 'currentSubsidySelect';
+  let inputId = type === 'original' ? 'originalSubsidy' : 'currentSubsidy';
+  let selectValue = document.getElementById(selectId).value;
+  document.getElementById(inputId).value = (selectValue === 'yes') ? DEFAULT_SUBSIDY : 0;
+}
 
-document.getElementById('payDateBox').addEventListener('click', function(){
-    document.getElementById('payDate').showPicker();
-});
-document.getElementById('applyDateBox').addEventListener('click', function(){
-    document.getElementById('applyDate').showPicker();
-});
+function calculate(){
+  const originalPrice = parseFloat(document.getElementById('originalPrice').value);
+  const currentPrice = parseFloat(document.getElementById('currentPrice').value);
+  const alreadyRefunded = parseFloat(document.getElementById('alreadyRefunded').value) || 0;
+  if (isNaN(originalPrice) || isNaN(currentPrice)) {
+    alert("请填写金额！");
+    return;
+  }
+  const originalSubsidy = (parseFloat(document.getElementById('originalSubsidy').value) || 0) / 100;
+  const currentSubsidy = (parseFloat(document.getElementById('currentSubsidy').value) || 0) / 100;
 
-setChannel('线上');
+  const option1 = originalPrice - currentPrice - alreadyRefunded;
+  const option2 = (originalPrice * (1 - originalSubsidy)) - (currentPrice * (1 - currentSubsidy)) - alreadyRefunded;
+  const refundAmount = Math.min(option1, option2);
+
+  const orderDate = new Date(document.getElementById('orderTime').value);
+  const applyDate = new Date(document.getElementById('applyTime').value);
+  const diffDays = (applyDate - orderDate) / (1000 * 60 * 60 * 24);
+
+  const resultBox = document.getElementById('result');
+  resultBox.style.display = 'block';
+
+  let platformRule = scriptRules[currentPlatform] || {};
+  let msgKey = "";
+
+  if (diffDays > 7) {
+    msgKey = "outOfPeriod";
+  } else if (refundAmount <= 0) {
+    msgKey = "refundZero";
+  } else {
+    const hasOrigSubsidy = originalSubsidy > 0;
+    const hasCurrSubsidy = currentSubsidy > 0;
+    if (!hasOrigSubsidy && !hasCurrSubsidy) msgKey = "no_no";
+    else if (!hasOrigSubsidy && hasCurrSubsidy) msgKey = "no_yes";
+    else if (hasOrigSubsidy && hasCurrSubsidy) msgKey = "yes_yes";
+    else if (hasOrigSubsidy && !hasCurrSubsidy) msgKey = "yes_no";
+  }
+
+  let msg = platformRule[msgKey] || "未匹配到话术，请补充规则。";
+  msg = msg.replace("{{amount}}", refundAmount.toFixed(2));
+
+  let priceInfo = `<p style="font-size:16px;font-weight:bold;color:#d32f2f; margin-bottom:8px;">
+    💰 本次可价保金额：${refundAmount.toFixed(2)} 元
+  </p>`;
+
+  resultBox.className = (msgKey === "refundZero" || msgKey === "outOfPeriod")
+      ? 'result error'
+      : 'result success';
+  resultBox.innerHTML = priceInfo + msg;
+}
 </script>
 </body>
 </html>
